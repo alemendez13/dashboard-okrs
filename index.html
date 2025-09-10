@@ -299,11 +299,150 @@
         addAccordionListeners();
     }
     
-    function renderPersonalView() {
-         const content = document.getElementById('main-content');
-         document.getElementById('view-title').textContent = 'Mi Tablero Personal';
-         content.innerHTML = `<div class="text-center p-10 bg-white rounded-lg border"><p class="text-gray-500">Vista "Mi Tablero Personal" en construcción.</p></div>`;
+// --- NUEVA FUNCIÓN COMPLETA PARA "MI TABLERO PERSONAL" ---
+
+function renderPersonalView() {
+    const content = document.getElementById('main-content');
+    document.getElementById('view-title').textContent = 'Mi Tablero Personal';
+    const userKpis = appData.kpis.filter(kpi => kpi.ID_Usuario_Res == currentUserId);
+
+    if (userKpis.length === 0) {
+        content.innerHTML = `<div class="text-center p-10 bg-white rounded-lg border"><p class="text-gray-500">Aún no tienes KPIs asignados.</p></div>`;
+        return;
     }
+
+    // --- Cálculos para las tarjetas de resumen ---
+    let totalProgressSum = 0;
+    let kpisWithTarget = 0;
+    const involvedProcesses = new Set();
+
+    userKpis.forEach(kpi => {
+        const results = appData.results.filter(r => r.ID_KPI === kpi.ID_KPI);
+        const current = results.length > 0 ? results.sort((a,b) => new Date(b.Fecha) - new Date(a.Fecha))[0].Valor : 0;
+        if (kpi.Meta > 0) {
+            totalProgressSum += Math.min((current / kpi.Meta), 1); // Suma el progreso (0 a 1)
+            kpisWithTarget++;
+        }
+        const process = appData.processes.find(p => p.ID_Proceso === kpi.ID_Proceso_Asc);
+        if (process) involvedProcesses.add(process.Nombre_Proceso);
+    });
+
+    const averageProgress = kpisWithTarget > 0 ? (totalProgressSum / kpisWithTarget) * 100 : 0;
+    const userFirstName = currentUser.Nombre_Completo ? currentUser.Nombre_Completo.split(' ')[0] : 'Usuario';
+
+    // --- Construcción del HTML ---
+    let html = `
+        <div class="space-y-8">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-800">Hola, ${userFirstName} 👋</h2>
+                <p class="mt-1 text-gray-600">Este es tu resumen de desempeño personal.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-white p-6 rounded-xl border border-gray-200 flex items-center gap-5">
+                    <div class="bg-sky-100 text-sky-600 p-3 rounded-full"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg></div>
+                    <div><p class="text-sm text-gray-500">KPIs Asignados</p><p class="text-2xl font-bold text-gray-800">${userKpis.length}</p></div>
+                </div>
+                <div class="bg-white p-6 rounded-xl border border-gray-200 flex items-center gap-5">
+                     <div class="bg-teal-100 text-teal-600 p-3 rounded-full"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg></div>
+                    <div><p class="text-sm text-gray-500">Progreso Promedio</p><p class="text-2xl font-bold text-gray-800">${averageProgress.toFixed(1)}%</p></div>
+                </div>
+                <div class="bg-white p-6 rounded-xl border border-gray-200 flex items-center gap-5">
+                     <div class="bg-indigo-100 text-indigo-600 p-3 rounded-full"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 8v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg></div>
+                    <div><p class="text-sm text-gray-500">Procesos Involucrados</p><p class="text-2xl font-bold text-gray-800">${involvedProcesses.size}</p></div>
+                </div>
+            </div>
+
+            <div>
+                <h3 class="text-xl font-bold text-gray-800 mb-4">Detalle de mis KPIs</h3>
+                <div class="space-y-4">`;
+
+    userKpis.forEach(kpi => {
+        const results = appData.results.filter(r => r.ID_KPI === kpi.ID_KPI).sort((a,b) => new Date(a.Fecha) - new Date(b.Fecha));
+        const current = results.length > 0 ? results[results.length - 1].Valor : 0;
+        const target = kpi.Meta;
+        const progress = target > 0 ? Math.min((current / target) * 100, 100) : 0;
+        const processName = appData.processes.find(p => p.ID_Proceso === kpi.ID_Proceso_Asc)?.Nombre_Proceso || 'N/A';
+
+        let metaDisplay;
+        if (kpi.Unidad === '%') {
+            metaDisplay = `${(current * 100).toFixed(1)}% / ${(target * 100).toFixed(1)}%`;
+        } else {
+            const formatOptions = kpi.Unidad === '$' ? { style: 'currency', currency: 'MXN', minimumFractionDigits: 0 } : {};
+            metaDisplay = `${current.toLocaleString('es-MX', formatOptions)} / ${target.toLocaleString('es-MX', formatOptions)}`;
+        }
+
+        html += `
+            <div class="bg-white p-5 rounded-xl border border-gray-200 grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
+                <div class="md:col-span-1">
+                    <p class="font-semibold text-gray-800">${kpi.Nombre_KPI}</p>
+                    <p class="text-sm text-gray-500">${processName}</p>
+                </div>
+                <div class="md:col-span-1">
+                    <div class="flex justify-between items-center text-sm mb-1">
+                        <span class="text-gray-600">Progreso</span>
+                        <span class="font-semibold ${progress >= 80 ? 'text-green-600' : 'text-amber-600'}">${progress.toFixed(1)}%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2"><div class="bg-gradient-to-r ${progress >= 80 ? 'from-green-400 to-green-500' : 'from-amber-400 to-amber-500'} h-2 rounded-full" style="width: ${progress}%"></div></div>
+                    <p class="text-xs text-right text-gray-500 mt-1">${metaDisplay}</p>
+                </div>
+                <div class="md:col-span-1 h-20">
+                    <canvas id="chart-kpi-${kpi.ID_KPI}"></canvas>
+                </div>
+            </div>`;
+    });
+
+    html += `</div></div></div>`;
+    content.innerHTML = html;
+
+    // ¡Importante! Llamamos a la función que crea las gráficas DESPUÉS de añadir el HTML al DOM
+    renderPersonalCharts(userKpis);
+}
+
+/**
+ * Función auxiliar para renderizar las gráficas de historial para cada KPI.
+ * Se debe llamar DESPUÉS de que renderPersonalView haya construido el HTML.
+ */
+function renderPersonalCharts(userKpis) {
+    userKpis.forEach(kpi => {
+        const chartCanvas = document.getElementById(`chart-kpi-${kpi.ID_KPI}`);
+        if (chartCanvas) {
+            const historicalResults = appData.results
+                .filter(r => r.ID_KPI === kpi.ID_KPI)
+                .sort((a,b) => new Date(a.Fecha) - new Date(b.Fecha));
+
+            const labels = historicalResults.map(r => new Date(r.Fecha).toLocaleDateString('es-MX', { month: 'short', day: 'numeric' }));
+            const dataPoints = historicalResults.map(r => r.Valor);
+
+            new Chart(chartCanvas, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Valor',
+                        data: dataPoints,
+                        borderColor: '#0ea5e9', // sky-500
+                        backgroundColor: 'rgba(14, 165, 233, 0.1)',
+                        borderWidth: 2,
+                        pointRadius: 2,
+                        pointBackgroundColor: '#0284c7', // sky-600
+                        tension: 0.3,
+                        fill: true,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false }, tooltip: { enabled: true } },
+                    scales: {
+                        x: { display: false },
+                        y: { display: false }
+                    }
+                }
+            });
+        }
+    });
+}
 
     function renderMyAssignmentsView() {
         const content = document.getElementById('main-content');
