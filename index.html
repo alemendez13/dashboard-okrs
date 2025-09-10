@@ -168,7 +168,7 @@
             let krCount = 0;
 
             keyResults.forEach(kr => {
-                const kpis = appData.kpis.filter(kpi => kpi.ID_Resultado_Clave_Asociado === kr.ID_Resultado_Clave);
+                const kpis = appData.kpis.filter(kpi => kpi.ID_Resultado_C === kr.ID_Resultado_Clave);
                 if (kpis.length > 0) {
                     const krProgress = kpis.reduce((acc, kpi) => {
                         const results = appData.results.filter(r => r.ID_KPI === kpi.ID_KPI);
@@ -201,7 +201,7 @@
                         <div class="space-y-5">`;
 
             keyResults.forEach(kr => {
-                 const kpis = appData.kpis.filter(kpi => kpi.ID_Resultado_Clave_Asociado === kr.ID_Resultado_Clave);
+                const kpis = appData.kpis.filter(kpi => kpi.ID_Resultado_C === kr.ID_Resultado_Clave); 
                  let current = 0, target = 0;
                  let isFinancial = false;
                  let unit = '';
@@ -303,7 +303,7 @@
     function renderMyAssignmentsView() {
         const content = document.getElementById('main-content');
         document.getElementById('view-title').textContent = 'Mis Asignaciones';
-        const assignedKpis = appData.kpis.filter(kpi => kpi.ID_Responsable == currentUserId);
+        const assignedKpis = appData.kpis.filter(kpi => kpi.ID_Usuario_Res == currentUserId);
 
         if (assignedKpis.length === 0) {
             content.innerHTML = `<div class="text-center p-10 bg-white rounded-lg border"><p class="text-gray-500">No tienes KPIs asignados.</p></div>`;
