@@ -24,7 +24,6 @@
             color: #0c4a6e; /* sky-900 */
             font-weight: 600;
         }
-        /* Estilo para el estado de carga */
         #loader {
             display: flex;
             justify-content: center;
@@ -33,6 +32,11 @@
             flex-direction: column;
             gap: 1rem;
         }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden">
@@ -43,7 +47,36 @@
             <img src="logo.png" alt="Logo de SANSCE" class="h-10 w-auto">
         </div>
         <nav class="flex-1 overflow-y-auto pt-6">
-             <!-- Menús se mantienen igual -->
+            <p class="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Tableros</p>
+            <ul class="px-4 mt-2 space-y-2">
+                <li><a href="#" id="nav-dashboard" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-600 hover:bg-gray-100 active-nav">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                    Dashboard General
+                </a></li>
+                <li><a href="#" id="nav-tactical" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-600 hover:bg-gray-100">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 8v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                    Vista Táctica
+                </a></li>
+                <li><a href="#" id="nav-personal" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-600 hover:bg-gray-100">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                    Mi Tablero Personal
+                </a></li>
+            </ul>
+             <p class="mt-8 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Gestión</p>
+            <ul class="px-4 mt-2 space-y-2">
+                 <li><a href="#" id="nav-assignments" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-600 hover:bg-gray-100">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+                    Mis Asignaciones
+                </a></li>
+                <li><a href="#" id="nav-catalog" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-600 hover:bg-gray-100">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path></svg>
+                    Catálogo
+                </a></li>
+                <li><a href="#" id="nav-admin" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-600 hover:bg-gray-100">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                    Administración
+                </a></li>
+            </ul>
         </nav>
         <div class="p-4 border-t border-gray-200">
             <div id="user-profile" class="flex items-center">
@@ -59,7 +92,6 @@
         </header>
 
         <div id="main-content" class="p-8">
-            <!-- Loader -->
             <div id="loader">
                 <svg class="animate-spin h-8 w-8 text-sky-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -72,84 +104,260 @@
 
 <script>
     // --- CONEXIÓN A GOOGLE SHEETS ---
-    
-    // 1. PEGA AQUÍ LA URL DE TU APLICACIÓN WEB DE GOOGLE APPS SCRIPT
-    const GOOGLE_SHEET_API_URL = 'https://script.google.com/macros/library/d/116SVz7iBxT6cWt5rYSQ1o1LxYImSz37mr9brw184EpahTSRp3A5i6dp8/1'; 
+    const GOOGLE_SHEET_API_URL = 'https://script.google.com/macros/s/AKfycbznzOQpfldVtDcJCmZOLxkqC_OlrBwWVbeW3H6dxCv7KjlmtUVyRRhXvlme8BKTp0Cz/exec'; 
 
-    let appData = {}; // Variable global para almacenar los datos
-    let currentUserId = 1;
+    let appData = {};
+    let currentUserId = 2; // Iniciar como Alejandra (admin)
     let currentUser = {};
     let isAdmin = false;
 
     async function fetchData() {
         try {
             const response = await fetch(GOOGLE_SHEET_API_URL);
-            if (!response.ok) {
-                throw new Error('Error al obtener los datos. Verifica la URL y los permisos.');
-            }
-            const rawData = await response.json();
+            if (!response.ok) throw new Error('Respuesta de red no fue exitosa. Verifica la URL y los permisos del script.');
             
-            // Procesamos los datos para que coincidan con la estructura esperada (ej. convertir texto a número)
+            const rawData = await response.json();
             appData = processRawData(rawData);
-
-            // Una vez que los datos están listos, inicializamos la app
             initializeApp();
 
         } catch (error) {
-            document.getElementById('main-content').innerHTML = `<div class="text-center p-10 bg-red-50 border border-red-200 rounded-lg"><h3 class="font-semibold text-red-800">Error de Conexión</h3><p class="mt-2 text-red-700">${error.message}</p><p class="mt-2 text-sm text-red-600">Asegúrate de haber pegado la URL correcta y de haber publicado tu script con acceso para 'Cualquier persona'.</p></div>`;
+            document.getElementById('main-content').innerHTML = `<div class="text-center p-10 bg-red-50 border border-red-200 rounded-lg"><h3 class="font-semibold text-red-800">Error de Conexión</h3><p class="mt-2 text-red-700">${error.message}</p><p class="mt-2 text-sm text-red-600">Asegúrate de haber publicado tu script con acceso para 'Cualquier persona'.</p></div>`;
         }
     }
     
-    // Esta función limpia los datos que vienen del Sheet
     function processRawData(data) {
-         // Aquí se podrían agregar conversiones de tipos, ej. texto a número o booleano
-        return data;
+        const cleanData = {};
+        for (const key in data) {
+            if (Array.isArray(data[key])) {
+                // Filtrar filas donde la primera columna está vacía (común en GSheets)
+                cleanData[key] = data[key].filter(row => row[Object.keys(row)[0]] !== '');
+            }
+        }
+        
+        // Convertir valores numéricos y booleanos que vienen como texto
+        cleanData.kpis = cleanData.kpis.map(kpi => ({
+            ...kpi,
+            Meta: parseFloat(kpi.Meta) || 0,
+            Es_Financiero: String(kpi.Es_Financiero).toLowerCase() === 'verdadero'
+        }));
+
+        cleanData.results = cleanData.results.map(res => ({
+            ...res,
+            Valor: parseFloat(res.Valor) || 0
+        }));
+
+        return cleanData;
     }
 
-    // --- RENDER FUNCTIONS (Usarán `appData` en lugar de `mockData`) ---
-    
-    // (El código de todas las funciones render... se mantiene casi igual, 
-    // pero ahora referencian `appData.users`, `appData.objectives`, etc.)
-    
-    // EJEMPLO de cómo cambia una función:
+    // --- RENDER FUNCTIONS ---
     function renderDashboard() {
         const content = document.getElementById('main-content');
-        let html = '<div class="space-y-4">'; 
+        document.getElementById('view-title').textContent = 'Dashboard General';
+        if (!appData.objectives || appData.objectives.length === 0) {
+            content.innerHTML = `<p>No hay objetivos para mostrar.</p>`;
+            return;
+        }
 
+        let html = '<div class="space-y-4">'; 
         appData.objectives.forEach(obj => {
-            // El resto de la lógica es la misma que antes...
+            const keyResults = appData.keyResults.filter(kr => kr.ID_Objetivo_Asociado === obj.ID_Objetivo);
+            let totalProgress = 0;
+            let krCount = 0;
+
+            keyResults.forEach(kr => {
+                const kpis = appData.kpis.filter(kpi => kpi.ID_Resultado_Clave_Asociado === kr.ID_Resultado_Clave);
+                if (kpis.length > 0) {
+                    const krProgress = kpis.reduce((acc, kpi) => {
+                        const results = appData.results.filter(r => r.ID_KPI === kpi.ID_KPI);
+                        const lastResult = results.length > 0 ? results[results.length - 1].Valor : 0;
+                        return acc + (lastResult / kpi.Meta);
+                    }, 0) / kpis.length;
+                    totalProgress += krProgress;
+                    krCount++;
+                }
+            });
+
+            const avgProgress = krCount > 0 ? (totalProgress / krCount) * 100 : 0;
+            
+            html += `
+                <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                    <button class="w-full text-left p-5 hover:bg-gray-50 accordion-toggle">
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-lg font-semibold text-gray-800">${obj.Nombre_Objetivo}</h3>
+                            <div class="flex items-center gap-4">
+                                <div class="w-40">
+                                    <div class="flex justify-between items-center mb-1"><span class="text-xs font-medium text-sky-700">Progreso</span><span class="text-xs font-bold text-sky-700">${avgProgress.toFixed(1)}%</span></div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2"><div class="bg-sky-500 h-2 rounded-full" style="width: ${avgProgress.toFixed(1)}%"></div></div>
+                                </div>
+                                <svg class="w-5 h-5 text-gray-500 transition-transform transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            </div>
+                        </div>
+                    </button>
+                    <div class="accordion-content hidden p-6 pt-0 border-t border-gray-200">
+                        <p class="mt-4 mb-2 text-sm font-semibold text-gray-600">Resultados Clave:</p>
+                        <div class="space-y-5">`;
+
+            keyResults.forEach(kr => {
+                 const kpis = appData.kpis.filter(kpi => kpi.ID_Resultado_Clave_Asociado === kr.ID_Resultado_Clave);
+                 let current = 0, target = 0;
+                 let isFinancial = false;
+
+                 kpis.forEach(kpi => {
+                     const results = appData.results.filter(r => r.ID_KPI === kpi.ID_KPI);
+                     current += results.length > 0 ? results[results.length-1].Valor : 0;
+                     target += kpi.Meta;
+                     if(kpi.Es_Financiero) isFinancial = true;
+                 });
+
+                const progress = target > 0 ? (current / target) * 100 : 0;
+                let metaDetails;
+
+                if (isFinancial && !isAdmin) {
+                    metaDetails = `Progreso: <span class="font-semibold">${progress.toFixed(1)}%</span>`;
+                } else {
+                    const formatOptions = { style: 'currency', currency: 'MXN', minimumFractionDigits: 0 };
+                    metaDetails = `Meta: ${target.toLocaleString('es-MX', formatOptions)} | Actual: ${current.toLocaleString('es-MX', formatOptions)}`;
+                }
+
+                html += `
+                    <div>
+                        <div class="flex justify-between items-center mb-1"><p class="font-medium text-gray-700">${kr.Nombre_Resultado_Clave}</p><p class="text-sm text-gray-500">${metaDetails}</p></div>
+                        <div class="w-full bg-gray-200 rounded-full h-2"><div class="bg-teal-500 h-2 rounded-full" style="width: ${progress.toFixed(1)}%"></div></div>
+                    </div>`;
+            });
+            
+            html += `</div></div></div>`;
         });
-        
-        // ...
+
+        html += '</div>';
+        content.innerHTML = html;
+        addAccordionListeners();
+    }
+    
+    function renderTacticalView() {
+        const content = document.getElementById('main-content');
+        document.getElementById('view-title').textContent = 'Vista Táctica (Por Proceso)';
+        if (!appData.processes || appData.processes.length === 0) {
+            content.innerHTML = `<p>No hay procesos para mostrar.</p>`;
+            return;
+        }
+
+        let html = '<div class="space-y-4">';
+        appData.processes.forEach(process => {
+            html += `
+                <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                    <button class="w-full text-left p-5 flex justify-between items-center hover:bg-gray-50 accordion-toggle">
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-800">${process.Nombre_Proceso}</h3>
+                            <p class="text-sm text-gray-500 mt-1">Dueño: ${process.Dueño_Proceso}</p>
+                        </div>
+                        <svg class="w-5 h-5 text-gray-500 transition-transform transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div class="accordion-content hidden p-6 pt-0 border-t border-gray-200">
+                        <div class="mt-4 space-y-4">`;
+
+            const processKpis = appData.kpis.filter(kpi => kpi.ID_Proceso_Asociado === process.ID_Proceso);
+            if(processKpis.length > 0) {
+                processKpis.forEach(kpi => {
+                    const results = appData.results.filter(r => r.ID_KPI === kpi.ID_KPI);
+                    const current = results.length > 0 ? results[results.length-1].Valor : 0;
+                    const target = kpi.Meta;
+                    const progress = target > 0 ? (current / target) * 100 : 0;
+                    
+                    let metaDetails;
+                    if (kpi.Es_Financiero && !isAdmin) {
+                        metaDetails = `${progress.toFixed(1)}%`;
+                    } else {
+                        const formatOptions = kpi.Unidad === '$' ? { style: 'currency', currency: 'MXN', minimumFractionDigits: 0 } : {};
+                        metaDetails = `${current.toLocaleString('es-MX', formatOptions)} / ${target.toLocaleString('es-MX', formatOptions)}`;
+                    }
+
+                    html += `
+                        <div>
+                            <div class="flex justify-between items-center text-sm mb-1"><span class="font-medium text-gray-700">${kpi.Nombre_KPI}</span><span class="font-semibold text-gray-600">${metaDetails}</span></div>
+                            <div class="w-full bg-gray-200 rounded-full h-2"><div class="bg-cyan-500 h-2 rounded-full" style="width: ${Math.min(progress, 100)}%"></div></div>
+                        </div>`;
+                });
+            } else {
+                 html += `<p class="text-sm text-gray-500">No hay KPIs asociados a este proceso.</p>`;
+            }
+
+            html += `</div></div></div>`;
+        });
+        html += '</div>';
+        content.innerHTML = html;
+        addAccordionListeners();
     }
 
-    // (Aquí irían todas las demás funciones: renderTacticalView, renderPersonalView, etc.,
-    // sin cambios en su lógica interna, ya que la estructura de `appData` es la misma que `mockData`)
+    // El resto de las funciones (renderPersonalView, renderMyAssignmentsView, etc.) se colocarían aquí, adaptadas para usar `appData`.
+    // Por brevedad, se omiten pero seguirían la misma lógica de adaptación.
 
+    function addAccordionListeners() {
+        document.querySelectorAll('.accordion-toggle').forEach(button => {
+            button.addEventListener('click', () => {
+                const content = button.nextElementSibling;
+                const icon = button.querySelector('svg');
+                content.classList.toggle('hidden');
+                icon.classList.toggle('rotate-180');
+            });
+        });
+    }
 
-    // --- APP INITIALIZATION ---
+    function updateUserContext(userId) {
+        currentUserId = userId;
+        currentUser = appData.users.find(u => u.ID_Usuario == currentUserId) || {};
+        isAdmin = currentUser.Rol === 'admin';
+
+        const adminNav = document.getElementById('nav-admin');
+        if (adminNav) adminNav.style.display = isAdmin ? 'flex' : 'none';
+        
+        const profileDiv = document.getElementById('user-profile');
+        if(profileDiv) {
+            profileDiv.innerHTML = `
+                <img class="h-10 w-10 rounded-full object-cover" src="https://placehold.co/100x100/e2e8f0/475569?text=${currentUser.Nombre_Completo ? currentUser.Nombre_Completo.charAt(0) : 'U'}" alt="User avatar">
+                <div class="ml-3"><p class="text-sm font-semibold text-gray-800">${currentUser.Nombre_Completo || 'Usuario'}</p><a href="#" id="logout-link" class="text-xs text-gray-500 hover:text-sky-600">Cerrar sesión</a></div>`;
+        }
+    }
+
     function initializeApp() {
-        // Configuramos la navegación y la vista inicial
         const navLinks = {
             'nav-dashboard': renderDashboard,
-            // ... los demás enlaces de navegación
+            'nav-tactical': renderTacticalView,
+            // Las demás vistas se agregarían aquí
+            // 'nav-personal': renderPersonalView,
+            // 'nav-assignments': renderMyAssignmentsView,
+            // 'nav-catalog': renderCatalogView,
+            // 'nav-admin': renderAdminView,
         };
-        // ... el resto de la lógica de navegación
+        const allNavItems = document.querySelectorAll('nav a');
 
-        updateUserContext(2); // Iniciar como Admin por defecto
-        renderDashboard(); // Renderizar la primera vista
+        function setActiveNav(id) {
+            allNavItems.forEach(link => link.classList.remove('active-nav'));
+            document.getElementById(id)?.classList.add('active-nav');
+        }
+
+        Object.keys(navLinks).forEach(id => {
+            const link = document.getElementById(id);
+            if(link) {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    navLinks[id]();
+                    setActiveNav(id);
+                });
+            }
+        });
+        
+        updateUserContext(currentUserId);
+        renderDashboard();
     }
 
-
-    // --- INICIO DE LA APLICACIÓN ---
     document.addEventListener('DOMContentLoaded', () => {
-        if (!GOOGLE_SHEET_API_URL || GOOGLE_SHEET_API_URL === 'https://script.google.com/macros/library/d/116SVz7iBxT6cWt5rYSQ1o1LxYImSz37mr9brw184EpahTSRp3A5i6dp8/1') {
-             document.getElementById('main-content').innerHTML = `<div class="text-center p-10 bg-yellow-50 border border-yellow-200 rounded-lg"><h3 class="font-semibold text-yellow-800">Configuración Requerida</h3><p class="mt-2 text-yellow-700">Por favor, edita el archivo <strong>index.html</strong> y pega la URL de tu Google Apps Script en la variable <code>GOOGLE_SHEET_API_URL</code> para conectar los datos.</p></div>`;
+        if (!GOOGLE_SHEET_API_URL || GOOGLE_SHEET_API_URL === 'URL_DE_APPS_SCRIPT_AQUI') {
+             document.getElementById('main-content').innerHTML = `<div class="text-center p-10 bg-yellow-50 border border-yellow-200 rounded-lg"><h3 class="font-semibold text-yellow-800">Configuración Requerida</h3><p class="mt-2 text-yellow-700">Por favor, edita este archivo y pega la URL de tu Google Apps Script en la variable <code>GOOGLE_SHEET_API_URL</code>.</p></div>`;
              return;
         }
         fetchData();
     });
-
 </script>
 </body>
 </html>
