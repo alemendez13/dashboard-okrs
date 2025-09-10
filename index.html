@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de OKRs y Desempeño</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js para gráficas -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide-react@latest/dist/lucide-react.js"></script>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc; /* gray-50 */
+        }
+        /* Custom scrollbar para un look más limpio */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .active-nav {
+            background-color: #e0f2fe; /* sky-100 */
+            color: #0c4a6e; /* sky-900 */
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden">
+
+    <!-- Barra de Navegación Lateral -->
+    <aside class="w-64 flex-shrink-0 bg-white border-r border-gray-200 flex flex-col">
+        <div class="h-16 flex items-center justify-center px-6 border-b border-gray-200">
+            <!-- LOGO ACTUALIZADO A PNG -->
+            <img src="logo.png" alt="Logo de SANSCE" class="h-10 w-auto">
+        </div>
+        <nav class="flex-1 overflow-y-auto pt-6">
+            <p class="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Tableros</p>
+            <ul class="px-4 mt-2 space-y-2">
+                <li><a href="#" id="nav-dashboard" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-600 hover:bg-gray-100 active-nav">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                    Dashboard General
+                </a></li>
+                <li><a href="#" id="nav-tactical" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-600 hover:bg-gray-100">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 8v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                    Vista Táctica
+                </a></li>
+                <li><a href="#" id="nav-personal" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-600 hover:bg-gray-100">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                    Mi Tablero Personal
+                </a></li>
+            </ul>
+             <p class="mt-8 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Gestión</p>
+            <ul class="px-4 mt-2 space-y-2">
+                 <li><a href="#" id="nav-assignments" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-600 hover:bg-gray-100">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+                    Mis Asignaciones
+                </a></li>
+                <li><a href="#" id="nav-catalog" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-600 hover:bg-gray-100">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path></svg>
+                    Catálogo
+                </a></li>
+                <li><a href="#" id="nav-admin" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-600 hover:bg-gray-100">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                    Administración
+                </a></li>
+            </ul>
+        </nav>
+        <div class="p-4 border-t border-gray-200">
+            <div id="user-profile" class="flex items-center">
+                <!-- User profile will be dynamically inserted here -->
+            </div>
+        </div>
+    </aside>
+
+    <!-- Contenido Principal -->
+    <main class="flex-1 overflow-y-auto">
+        <header class="h-16 flex items-center justify-between px-8 border-b border-gray-200 bg-white sticky top-0">
+            <h1 id="view-title" class="text-xl font-semibold text-gray-900">Dashboard General</h1>
+            <div class="text-sm text-gray-500">
+                PMR-FR-04 | Ed. 1.0
+            </div>
+        </header>
+
+        <div id="main-content" class="p-8">
+            <!-- El contenido dinámico se insertará aquí -->
+        </div>
+    </main>
+
+<script>
+    // --- MOCK DATA ---
+    const mockData = {
+        users: [
+            { id: 1, name: 'Jorge Pérez', avatar: 'https://placehold.co/100x100/e2e8f0/475569?text=JP', role: 'user' },
+            { id: 2, name: 'Alejandra Méndez', avatar: 'https://placehold.co/100x100/dbeafe/1e40af?text=AM', role: 'admin' },
+            { id: 3, name: 'Teresa Vazquez', avatar: 'https://placehold.co/100x100/fee2e2/991b1b?text=TV', role: 'user' },
+        ],
+        objectives: [
+            { id: 1, title: 'Consolidar el equipo de trabajo', period: '2025-S2' },
+            { id: 2, title: 'Mejorar nivel de servicio y experiencia del paciente', period: '2025-S2' },
+            { id: 3, title: 'Generación de utilidades', period: '2025-S2' },
+        ],
+        keyResults: [
+            { id: 101, objectiveId: 1, title: 'Evaluación de desempeño', target: 0.9, current: 0.84, isFinancial: false, unit: '%' },
+            { id: 102, objectiveId: 1, title: 'Cumplimiento con programa de capacitación', target: 1, current: 0.47, isFinancial: false, unit: '%' },
+            { id: 201, objectiveId: 2, title: 'Nivel de servicio administrativo', target: 0.95, current: 0.81, isFinancial: false, unit: '%' },
+            { id: 202, objectiveId: 2, title: 'Nivel de servicio clínico', target: 0.95, current: 0.88, isFinancial: false, unit: '%' },
+            { id: 301, objectiveId: 3, title: 'Facturación', target: 500000, current: 410000, isFinancial: true, unit: '$' },
+            { id: 302, objectiveId: 3, title: 'Control de costos y gastos', target: 0.8, current: 0.72, isFinancial: false, unit: '%' },
+        ],
+        processes: [
+            { id: 'PMR-PC', name: 'Proceso de Medición de Resultados', owner: 'Alejandra Méndez' },
+            { id: 'RHU-PC', name: 'Recursos Humanos', owner: 'Jorge Méndez' },
+            { id: 'FIN-PC', name: 'Finanzas', owner: 'Alejandra Méndez' },
+        ],
+        personalKpis: [
+            { 
+                id: 1001, userId: 1, name: 'Pacientes con apego al programa', target: 90, frequency: 'Semanal', unit: '%', isFinancial: false,
+                measurements: [ { date: 'S27', value: 85 }, { date: 'S28', value: 88 }, { date: 'S29', value: 87 }, { date: 'S30', value: 91 } ],
+                accumulated: { year: { target: 90, measurements: [ { date: 'Ene', value: 85 }, { date: 'Feb', value: 86 }, { date: 'Mar', value: 88 } ] } }
+            },
+            { 
+                id: 1002, userId: 1, name: 'Facturación Semanal Propia', target: 15000, frequency: 'Semanal', unit: '$', isFinancial: true,
+                measurements: [ { date: 'S27', value: 12500 }, { date: 'S28', value: 14800 }, { date: 'S29', value: 15100 }, { date: 'S30', value: 14200 } ],
+                accumulated: { year: { target: 720000, measurements: [ { date: 'Ene', value: 58000 }, { date: 'Feb', value: 110000 }, { date: 'Mar', value: 180000 } ] } }
+            },
+            { 
+                id: 2001, userId: 2, name: 'Cobranza corriente', target: 95, frequency: 'Mensual', unit: '%', isFinancial: false,
+                measurements: [ { date: 'Ene', value: 88 }, { date: 'Feb', value: 91 }, { date: 'Mar', value: 94 } ],
+                accumulated: { year: { target: 95, measurements: [ { date: 'Ene', value: 88 }, { date: 'Feb', value: 91 }, { date: 'Mar', value: 94 } ] } }
+            },
+             { 
+                id: 2002, userId: 2, name: 'Reducción de Gastos Operativos', target: 50000, current: 45000, frequency: 'Mensual', unit: '$', isFinancial: true,
+                measurements: [ { date: 'Ene', value: 48000 }, { date: 'Feb', value: 46500 }, { date: 'Mar', value: 45000 } ],
+                accumulated: { year: { target: 600000, measurements: [ { date: 'Ene', value: 48000 }, { date: 'Feb', value: 94500 }, { date: 'Mar', value: 139500 } ] } }
+            },
+            { 
+                id: 3001, userId: 3, name: 'Tasa de ocupación de consultorios', target: 80, frequency: 'Semanal', unit: '%', isFinancial: false,
+                measurements: [ { date: 'S27', value: 75 }, { date: 'S28', value: 82 }, { date: 'S29', value: 78 }, { date: 'S30', value: 81 } ],
+                accumulated: { year: { target: 80, measurements: [ { date: 'Ene', value: 75 }, { date: 'Feb', value: 78 }, { date: 'Mar', value: 80 } ] } }
+            }
+        ],
+        catalog: {
+            objectives: [ { name: 'Consolidar el equipo de trabajo', definition: 'Mide el fortalecimiento y unión de nuestro equipo de trabajo para mejorar la colaboración, comunicación, eficiencia y rendimiento colectivo.' }, { name: 'Generación de utilidades', definition: 'Medición de ganancias asegurando sostenibilidad económica de la empresa sin comprometer calidad ni satisfacción del usuario.' } ],
+            keyResults: [ { name: 'Evaluación de desempeño', definition: 'Resultado de la evaluación de desempeño.' }, { name: 'Facturación', definition: 'Mide los ingresos proyectados y la actividad necesaria para lograrlo.' } ],
+            kpis: [ { name: 'Pacientes con apego al programa', definition: 'Porcentaje de pacientes que cumplen con los tratamientos señalados.' }, { name: 'Tasa de ocupación de consultorios', definition: 'Porcentaje de tiempo en el que un consultorio está siendo utilizado activamente frente a su disponibilidad total.' } ]
+        }
+    };
+
+    // --- USER AND ROLE MANAGEMENT ---
+    let currentUserId = 1; // Default user. Can be changed for simulation.
+    let currentUser = mockData.users.find(u => u.id === currentUserId);
+    let isAdmin = currentUser.role === 'admin';
+
+    // --- RENDER FUNCTIONS ---
+    function renderDashboard() {
+        const content = document.getElementById('main-content');
+        let html = '<div class="space-y-4">'; 
+
+        mockData.objectives.forEach(obj => {
+            const krs = mockData.keyResults.filter(kr => kr.objectiveId === obj.id);
+            const totalProgress = krs.length > 0 ? krs.reduce((acc, kr) => {
+                let progress = kr.current / kr.target;
+                if (progress > 1) progress = 1;
+                return acc + progress;
+            }, 0) / krs.length : 0;
+            const progressPercentage = (totalProgress * 100).toFixed(1);
+
+            html += `
+                <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                    <button class="w-full text-left p-5 hover:bg-gray-50 accordion-toggle">
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-lg font-semibold text-gray-800">${obj.title}</h3>
+                            <div class="flex items-center gap-4">
+                                <div class="w-40">
+                                    <div class="flex justify-between items-center mb-1">
+                                        <span class="text-xs font-medium text-sky-700">Progreso General</span>
+                                        <span class="text-xs font-bold text-sky-700">${progressPercentage}%</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div class="bg-sky-500 h-2 rounded-full" style="width: ${progressPercentage}%"></div>
+                                    </div>
+                                </div>
+                                <svg class="w-5 h-5 text-gray-500 transition-transform transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            </div>
+                        </div>
+                    </button>
+                    <div class="accordion-content hidden p-6 pt-0 border-t border-gray-200">
+                        <p class="mt-4 mb-2 text-sm font-semibold text-gray-600">Resultados Clave:</p>
+                        <div class="space-y-5">`;
+
+            krs.forEach(kr => {
+                const progress = Math.min(kr.current / kr.target, 1) * 100;
+                let metaDetails;
+
+                if (kr.isFinancial && !isAdmin) {
+                    metaDetails = `Progreso: <span class="font-semibold">${progress.toFixed(1)}%</span>`;
+                } else {
+                    const formatOptions = kr.unit === '$' ? { style: 'currency', currency: 'MXN', minimumFractionDigits: 0 } : {};
+                    metaDetails = `Meta: ${kr.target.toLocaleString('es-MX', formatOptions)} | Actual: ${kr.current.toLocaleString('es-MX', formatOptions)}`;
+                }
+
+                html += `
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <p class="font-medium text-gray-700">${kr.title}</p>
+                            <p class="text-sm text-gray-500">${metaDetails}</p>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-teal-500 h-2 rounded-full" style="width: ${progress.toFixed(1)}%"></div>
+                        </div>
+                    </div>`;
+            });
+            
+            html += `</div></div></div>`;
+        });
+
+        html += '</div>';
+        content.innerHTML = html;
+        document.getElementById('view-title').textContent = 'Dashboard General';
+        addAccordionListeners();
+    }
+
+    function renderTacticalView() {
+        const content = document.getElementById('main-content');
+        let html = '<div class="space-y-4">';
+
+        mockData.processes.forEach(process => {
+             const processKpis = mockData.keyResults.filter(kr => kr.objectiveId === 1 || kr.objectiveId === 3); // Simulación
+            html += `
+                <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                    <button class="w-full text-left p-5 flex justify-between items-center hover:bg-gray-50 accordion-toggle">
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-800">${process.name}</h3>
+                            <p class="text-sm text-gray-500 mt-1">Dueño: ${process.owner}</p>
+                        </div>
+                        <svg class="w-5 h-5 text-gray-500 transition-transform transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div class="accordion-content hidden p-6 pt-0 border-t border-gray-200">
+                        <div class="mt-4 space-y-4">`;
+
+            processKpis.forEach(kpi => {
+                const progress = (kpi.current / kpi.target) * 100;
+                let metaDetails;
+                if (kpi.isFinancial && !isAdmin) {
+                    metaDetails = `${progress.toFixed(1)}%`;
+                } else {
+                    const formatOptions = kpi.unit === '$' ? { style: 'currency', currency: 'MXN', minimumFractionDigits: 0 } : {};
+                    metaDetails = `${kpi.current.toLocaleString('es-MX', formatOptions)} / ${kpi.target.toLocaleString('es-MX', formatOptions)}`;
+                }
+
+                html += `
+                    <div>
+                        <div class="flex justify-between items-center text-sm mb-1">
+                            <span class="font-medium text-gray-700">${kpi.title}</span>
+                            <span class="font-semibold text-gray-600">${metaDetails}</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-cyan-500 h-2 rounded-full" style="width: ${Math.min(progress, 100)}%"></div>
+                        </div>
+                    </div>`;
+            });
+
+            html += `</div></div></div>`;
+        });
+
+        html += '</div>';
+        content.innerHTML = html;
+        document.getElementById('view-title').textContent = 'Vista Táctica (Por Proceso)';
+        addAccordionListeners();
+    }
+
+    function renderPersonalView() {
+        const content = document.getElementById('main-content');
+        const userKpis = mockData.personalKpis.filter(kpi => kpi.userId === currentUser.id);
+        
+        if (userKpis.length === 0) {
+            content.innerHTML = `<div class="text-center p-10 bg-white rounded-lg border"><p class="text-gray-500">No tienes KPIs asignados para mostrar en tu tablero.</p></div>`;
+            document.getElementById('view-title').textContent = 'Mi Tablero Personal';
+            return;
+        }
+
+        const overallProgress = userKpis.reduce((acc, kpi) => {
+            const lastMeasurement = kpi.measurements[kpi.measurements.length - 1];
+            return acc + (lastMeasurement.value / kpi.target);
+        }, 0) / userKpis.length;
+        const overallProgressPercentage = (overallProgress * 100).toFixed(1);
+
+        let html = `
+            <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm mb-8">
+                <h3 class="text-lg font-semibold text-gray-800">Resumen de Desempeño Semanal</h3>
+                <div class="mt-4"><div class="flex justify-between items-center mb-1"><span class="text-sm font-medium text-indigo-700">Progreso General de KPIs</span><span class="text-sm font-bold text-indigo-700">${overallProgressPercentage}%</span></div><div class="w-full bg-gray-200 rounded-full h-2.5"><div class="bg-indigo-500 h-2.5 rounded-full" style="width: ${Math.min(overallProgressPercentage, 100)}%"></div></div></div>
+                <div class="mt-6"><p class="text-sm font-medium text-gray-700 mb-2">Análisis y Plan de Acción:</p><textarea class="w-full h-24 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Describe aquí los logros, áreas de oportunidad y las acciones que tomarás..."></textarea><button class="mt-2 px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors">Guardar Análisis</button></div>
+            </div>
+            <div class="space-y-8">`;
+        
+        userKpis.forEach(kpi => {
+            let displayValue, metaText, weeklyChartData, weeklyChartTarget, weeklyYAxisConfig, annualChartData, annualChartTarget, annualYAxisConfig;
+            const lastMeasurement = kpi.measurements[kpi.measurements.length - 1];
+            const weeklyProgress = (lastMeasurement.value / kpi.target) * 100;
+
+            if (kpi.isFinancial && !isAdmin) {
+                displayValue = `${weeklyProgress.toFixed(1)}<span class="text-base font-medium text-gray-500"> %</span>`;
+                metaText = 'Meta de Progreso: 100%';
+                weeklyChartData = kpi.measurements.map(m => (m.value / kpi.target) * 100);
+                weeklyChartTarget = 100;
+                weeklyYAxisConfig = { beginAtZero: true, max: 120, ticks: { callback: value => `${value}%` } };
+                annualChartData = kpi.accumulated.year.measurements.map(m => (m.value / kpi.accumulated.year.target) * 100);
+                annualChartTarget = 100;
+                annualYAxisConfig = { beginAtZero: true, max: 120, ticks: { callback: value => `${value}%` } };
+            } else {
+                const formatOptions = kpi.unit === '$' ? { style: 'currency', currency: 'MXN', minimumFractionDigits: 0 } : {};
+                displayValue = `${lastMeasurement.value.toLocaleString('es-MX', formatOptions)}<span class="text-base font-medium text-gray-500"> ${kpi.unit === '$' ? '' : kpi.unit}</span>`;
+                metaText = `Meta: ${kpi.target.toLocaleString('es-MX', formatOptions)}`;
+                weeklyChartData = kpi.measurements.map(m => m.value);
+                weeklyChartTarget = kpi.target;
+                weeklyYAxisConfig = { beginAtZero: true };
+                annualChartData = kpi.accumulated.year.measurements.map(m => m.value);
+                annualChartTarget = kpi.accumulated.year.target;
+                annualYAxisConfig = { beginAtZero: true };
+            }
+
+            html += `
+                <div>
+                    <h3 class="text-xl font-semibold text-gray-800 mb-4">${kpi.name}</h3>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                            <h4 class="font-semibold text-gray-700">Avance Semanal</h4>
+                            <div class="flex items-baseline gap-4 mt-3"><p class="text-3xl font-bold text-gray-900">${displayValue}</p><p class="text-base text-gray-600">${metaText}</p></div>
+                            <div class="mt-4 w-full bg-gray-200 rounded-full h-2.5"><div class="bg-indigo-500 h-2.5 rounded-full" style="width: ${Math.min(weeklyProgress, 100)}%"></div></div>
+                            <div class="mt-6 h-56"><canvas id="chart-week-${kpi.id}"></canvas></div>
+                        </div>
+                        <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                            <h4 class="font-semibold text-gray-700">Avance Acumulado Anual</h4>
+                            <div class="mt-4 h-56"><canvas id="chart-year-${kpi.id}"></canvas></div>
+                        </div>
+                    </div>
+                </div>`;
+            
+            // Defer chart initialization
+            setTimeout(() => {
+                const ctxWeek = document.getElementById(`chart-week-${kpi.id}`)?.getContext('2d');
+                if (ctxWeek) new Chart(ctxWeek, { type: 'line', data: { labels: kpi.measurements.map(m => m.date), datasets: [{ label: 'Resultado', data: weeklyChartData, borderColor: 'rgb(99, 102, 241)', backgroundColor: 'rgba(99, 102, 241, 0.1)', fill: true, tension: 0.3 }, { label: 'Meta', data: Array(kpi.measurements.length).fill(weeklyChartTarget), borderColor: 'rgb(239, 68, 68)', borderDash: [5, 5], fill: false, pointRadius: 0 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: weeklyYAxisConfig }, plugins: { legend: { display: false } } } });
+
+                const ctxYear = document.getElementById(`chart-year-${kpi.id}`)?.getContext('2d');
+                if (ctxYear) new Chart(ctxYear, { type: 'line', data: { labels: kpi.accumulated.year.measurements.map(m => m.date), datasets: [{ label: 'Resultado', data: annualChartData, borderColor: 'rgb(20, 184, 166)', backgroundColor: 'rgba(20, 184, 166, 0.1)', fill: true, tension: 0.3 }, { label: 'Meta', data: Array(kpi.accumulated.year.measurements.length).fill(annualChartTarget), borderColor: 'rgb(239, 68, 68)', borderDash: [5, 5], fill: false, pointRadius: 0 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: annualYAxisConfig }, plugins: { legend: { display: false } } } });
+            }, 0);
+        });
+
+        html += '</div>';
+        content.innerHTML = html;
+        document.getElementById('view-title').textContent = 'Mi Tablero Personal';
+    }
+
+    function renderMyAssignmentsView() {
+        const content = document.getElementById('main-content');
+        document.getElementById('view-title').textContent = 'Mis Asignaciones';
+        const assignedKpis = mockData.personalKpis.filter(kpi => kpi.userId === currentUser.id);
+
+        if (assignedKpis.length === 0) {
+            content.innerHTML = `<div class="text-center text-gray-500"><p>No tienes KPIs asignados.</p></div>`;
+            return;
+        }
+
+        let html = `<div class="bg-white rounded-xl border border-gray-200 shadow-sm"><div class="overflow-x-auto"><table class="w-full text-sm text-left text-gray-500"><thead class="text-xs text-gray-700 uppercase bg-gray-50"><tr><th scope="col" class="px-6 py-3">Nombre del KPI</th><th scope="col" class="px-6 py-3">Frecuencia</th><th scope="col" class="px-6 py-3">Meta</th></tr></thead><tbody>`;
+        
+        assignedKpis.forEach(kpi => {
+            let metaDisplay;
+            if (kpi.isFinancial && !isAdmin) {
+                metaDisplay = `Objetivo de Progreso`;
+            } else {
+                const formatOptions = kpi.unit === '$' ? { style: 'currency', currency: 'MXN', minimumFractionDigits: 0 } : {};
+                metaDisplay = `${kpi.target.toLocaleString('es-MX', formatOptions)} ${kpi.unit === '$' ? '' : kpi.unit}`;
+            }
+            html += `<tr class="bg-white border-b hover:bg-gray-50"><th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">${kpi.name}</th><td class="px-6 py-4">${kpi.frequency}</td><td class="px-6 py-4">${metaDisplay}</td></tr>`;
+        });
+
+        html += `</tbody></table></div></div>`;
+        content.innerHTML = html;
+    }
+
+    function renderCatalogView() {
+        const content = document.getElementById('main-content');
+        document.getElementById('view-title').textContent = 'Catálogo de Objetivos y KPIs';
+        let html = '<div class="space-y-8">';
+        
+        ['objectives', 'keyResults', 'kpis'].forEach(category => {
+            const title = { objectives: 'Objetivos', keyResults: 'Resultados Clave', kpis: 'KPIs' }[category];
+            html += `<div><h2 class="text-xl font-semibold text-gray-800 mb-4">${title}</h2><div class="space-y-3">`;
+            mockData.catalog[category].forEach(item => {
+                html += `<div class="p-4 bg-white rounded-lg border border-gray-200"><p class="font-semibold text-gray-700">${item.name}</p><p class="mt-1 text-sm text-gray-600">${item.definition}</p></div>`;
+            });
+            html += `</div></div>`;
+        });
+        
+        html += '</div>';
+        content.innerHTML = html;
+    }
+
+    function renderAdminView() {
+        const content = document.getElementById('main-content');
+        document.getElementById('view-title').textContent = 'Análisis de Administración';
+
+        const userPerformance = mockData.users.map(user => {
+            const userKpis = mockData.personalKpis.filter(kpi => kpi.userId === user.id);
+            if (userKpis.length === 0) return { ...user, performance: 0, kpiCount: 0 };
+            const totalPerformance = userKpis.reduce((acc, kpi) => {
+                const lastValue = kpi.measurements[kpi.measurements.length - 1].value;
+                const progress = (lastValue / kpi.target);
+                return acc + (progress > 1 ? 1 : progress);
+            }, 0);
+            return { ...user, performance: (totalPerformance / userKpis.length) * 100, kpiCount: userKpis.length };
+        });
+
+        let html = `
+            <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm mb-8">
+                <h3 class="text-lg font-semibold text-gray-800">Impacto y Desempeño por Usuario</h3>
+                <div class="mt-4 h-80"><canvas id="admin-impact-chart"></canvas></div>
+            </div>
+            <div class="space-y-4">`;
+
+        userPerformance.forEach(user => {
+            html += `
+                <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                    <button class="w-full text-left p-5 hover:bg-gray-50 accordion-toggle">
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center gap-3"><img src="${user.avatar}" class="h-10 w-10 rounded-full"><div><h3 class="font-semibold text-gray-800">${user.name}</h3><p class="text-xs text-gray-500">${user.kpiCount} KPIs asignados</p></div></div>
+                            <div class="flex items-center gap-4"><div class="w-40"><div class="flex justify-between items-center mb-1"><span class="text-xs font-medium text-sky-700">Desempeño</span><span class="text-xs font-bold text-sky-700">${user.performance.toFixed(1)}%</span></div><div class="w-full bg-gray-200 rounded-full h-2"><div class="bg-sky-500 h-2 rounded-full" style="width: ${user.performance.toFixed(1)}%"></div></div></div><svg class="w-5 h-5 text-gray-500 transition-transform transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></div>
+                        </div>
+                    </button>
+                    <div class="accordion-content hidden p-6 pt-0 border-t border-gray-200"><div class="mt-4 space-y-2 text-sm">`;
+            
+            const userKpis = mockData.personalKpis.filter(kpi => kpi.userId === user.id);
+            if(userKpis.length > 0) {
+                 userKpis.forEach(kpi => {
+                    const lastValue = kpi.measurements[kpi.measurements.length - 1].value;
+                    const progress = (lastValue / kpi.target) * 100;
+                    const formatOptions = kpi.unit === '$' ? { style: 'currency', currency: 'MXN', minimumFractionDigits: 0 } : {};
+                    html += `<p><span class="font-medium">${kpi.name}:</span> ${lastValue.toLocaleString('es-MX', formatOptions)} / ${kpi.target.toLocaleString('es-MX', formatOptions)} ${kpi.unit === '$' ? '' : kpi.unit} (${progress.toFixed(1)}%)</p>`;
+                 });
+            } else {
+                html += `<p class="text-gray-500">Sin KPIs asignados.</p>`;
+            }
+           
+            html += `</div></div></div>`;
+        });
+        
+        html += '</div>';
+        content.innerHTML = html;
+
+        const ctx = document.getElementById('admin-impact-chart').getContext('2d');
+        new Chart(ctx, { type: 'bar', data: { labels: userPerformance.map(u => u.name), datasets: [{ label: 'Desempeño General (%)', data: userPerformance.map(u => u.performance), backgroundColor: 'rgba(14, 165, 233, 0.6)', borderColor: 'rgba(14, 165, 233, 1)', borderWidth: 1 }] }, options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', scales: { x: { beginAtZero: true, max: 100 } }, plugins: { legend: { display: false } } } });
+        addAccordionListeners();
+    }
+
+    function addAccordionListeners() {
+        document.querySelectorAll('.accordion-toggle').forEach(button => {
+            button.addEventListener('click', () => {
+                const content = button.nextElementSibling;
+                const icon = button.querySelector('svg');
+                content.classList.toggle('hidden');
+                icon.classList.toggle('rotate-180');
+            });
+        });
+    }
+
+    function updateUserContext(userId) {
+        currentUserId = userId;
+        currentUser = mockData.users.find(u => u.id === currentUserId);
+        isAdmin = currentUser.role === 'admin';
+
+        // Ocultar/mostrar el enlace de Administración
+        const adminNav = document.getElementById('nav-admin');
+        if (adminNav) {
+            adminNav.style.display = isAdmin ? 'flex' : 'none';
+        }
+
+        // Actualizar el perfil de usuario en la UI
+        const profileDiv = document.getElementById('user-profile');
+        if(profileDiv) {
+            profileDiv.innerHTML = `
+                <img class="h-10 w-10 rounded-full object-cover" src="${currentUser.avatar}" alt="User avatar">
+                <div class="ml-3">
+                    <p class="text-sm font-semibold text-gray-800">${currentUser.name}</p>
+                    <a href="#" id="logout-link" class="text-xs text-gray-500 hover:text-sky-600">Cerrar sesión</a>
+                </div>`;
+        }
+    }
+
+
+    // --- NAVIGATION LOGIC ---
+    document.addEventListener('DOMContentLoaded', () => {
+        const navLinks = {
+            'nav-dashboard': renderDashboard,
+            'nav-tactical': renderTacticalView,
+            'nav-personal': renderPersonalView,
+            'nav-assignments': renderMyAssignmentsView,
+            'nav-catalog': renderCatalogView,
+            'nav-admin': renderAdminView,
+        };
+        const allNavItems = document.querySelectorAll('nav a');
+
+        function setActiveNav(id) {
+            allNavItems.forEach(link => link.classList.remove('active-nav'));
+            document.getElementById(id)?.classList.add('active-nav');
+        }
+
+        Object.keys(navLinks).forEach(id => {
+            const link = document.getElementById(id);
+            if(link) {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    navLinks[id]();
+                    setActiveNav(id);
+                });
+            }
+        });
+        
+        // Carga inicial
+        updateUserContext(2); // Iniciar como Admin (Alejandra) para ver todo
+        renderDashboard();
+    });
+
+</script>
+</body>
+</html>
+
