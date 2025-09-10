@@ -261,7 +261,7 @@
                     <div class="accordion-content hidden p-6 pt-0 border-t border-gray-200">
                         <div class="mt-4 space-y-4">`;
 
-            const processKpis = appData.kpis.filter(kpi => kpi.ID_Proceso_Asociado === process.ID_Proceso);
+            const processKpis = appData.kpis.filter(kpi => kpi.ID_Proceso_Asc === process.ID_Proceso);
             if(processKpis.length > 0) {
                 processKpis.forEach(kpi => {
                     const results = appData.results.filter(r => r.ID_KPI === kpi.ID_KPI);
