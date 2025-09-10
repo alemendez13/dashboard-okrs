@@ -74,7 +74,7 @@
     // --- CONEXIÓN A GOOGLE SHEETS ---
     
     // 1. PEGA AQUÍ LA URL DE TU APLICACIÓN WEB DE GOOGLE APPS SCRIPT
-    const GOOGLE_SHEET_API_URL = 'https://script.google.com/macros/sAKfycbznzOQpfIdVtDcJCmZOLxkqC_OlrBwWVbeW3H6dxCv7KjlmtUVyRRhXvlme8BKTp0Cz/exec'; 
+    const GOOGLE_SHEET_API_URL = 'https://script.google.com/macros/library/d/116SVz7iBxT6cWt5rYSQ1o1LxYImSz37mr9brw184EpahTSRp3A5i6dp8/1'; 
 
     let appData = {}; // Variable global para almacenar los datos
     let currentUserId = 1;
@@ -143,7 +143,7 @@
 
     // --- INICIO DE LA APLICACIÓN ---
     document.addEventListener('DOMContentLoaded', () => {
-        if (!GOOGLE_SHEET_API_URL || GOOGLE_SHEET_API_URL === 'https://script.google.com/macros/sAKfycbznzOQpfIdVtDcJCmZOLxkqC_OlrBwWVbeW3H6dxCv7KjlmtUVyRRhXvlme8BKTp0Cz/exec') {
+        if (!GOOGLE_SHEET_API_URL || GOOGLE_SHEET_API_URL === 'https://script.google.com/macros/library/d/116SVz7iBxT6cWt5rYSQ1o1LxYImSz37mr9brw184EpahTSRp3A5i6dp8/1') {
              document.getElementById('main-content').innerHTML = `<div class="text-center p-10 bg-yellow-50 border border-yellow-200 rounded-lg"><h3 class="font-semibold text-yellow-800">Configuración Requerida</h3><p class="mt-2 text-yellow-700">Por favor, edita el archivo <strong>index.html</strong> y pega la URL de tu Google Apps Script en la variable <code>GOOGLE_SHEET_API_URL</code> para conectar los datos.</p></div>`;
              return;
         }
