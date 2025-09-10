@@ -269,13 +269,18 @@
                     const target = kpi.Meta;
                     const progress = target > 0 ? Math.min((current / target) * 100, 100) : 0;
                     
-                    let metaDetails;
-                    if (kpi.Es_Financiero && !isAdmin) {
-                        metaDetails = `${progress.toFixed(1)}%`;
-                    } else {
-                        const formatOptions = kpi.Unidad === '$' ? { style: 'currency', currency: 'MXN', minimumFractionDigits: 0 } : {};
-                        metaDetails = `${current.toLocaleString('es-MX', formatOptions)} / ${target.toLocaleString('es-MX', formatOptions)}`;
-                    }
+            // --- NUEVO BLOQUE CORREGIDO ---
+            let metaDetails;
+            if (kpi.Es_Financiero && !isAdmin) {
+                metaDetails = `${progress.toFixed(1)}%`;
+            } else if (kpi.Unidad === '%') {
+                // Si la unidad es %, multiplica por 100 y añade el símbolo
+                metaDetails = `${(current * 100).toFixed(1)}% / ${(target * 100).toFixed(1)}%`;
+            } else {
+                // Lógica original para números y moneda
+                const formatOptions = kpi.Unidad === '$' ? { style: 'currency', currency: 'MXN', minimumFractionDigits: 0 } : {};
+                metaDetails = `${current.toLocaleString('es-MX', formatOptions)} / ${target.toLocaleString('es-MX', formatOptions)}`;
+            }
 
                     html += `
                         <div>
@@ -313,13 +318,18 @@
         let html = `<div class="bg-white rounded-xl border border-gray-200 shadow-sm"><div class="overflow-x-auto"><table class="w-full text-sm text-left text-gray-500"><thead class="text-xs text-gray-700 uppercase bg-gray-50"><tr><th scope="col" class="px-6 py-3">Nombre del KPI</th><th scope="col" class="px-6 py-3">Frecuencia</th><th scope="col" class="px-6 py-3">Meta</th></tr></thead><tbody>`;
         
         assignedKpis.forEach(kpi => {
-            let metaDisplay;
-            if (kpi.Es_Financiero && !isAdmin) {
-                metaDisplay = `Objetivo de Progreso`;
-            } else {
-                const formatOptions = kpi.Unidad === '$' ? { style: 'currency', currency: 'MXN', minimumFractionDigits: 0 } : {};
-                metaDisplay = `${kpi.Meta.toLocaleString('es-MX', formatOptions)} ${kpi.Unidad === '$' ? '' : kpi.Unidad}`;
-            }
+            // --- NUEVO BLOQUE CORREGIDO ---
+let metaDisplay;
+if (kpi.Es_Financiero && !isAdmin) {
+    metaDisplay = `Objetivo de Progreso`;
+} else if (kpi.Unidad === '%') {
+    // Si la unidad es %, multiplica por 100 y muestra como porcentaje
+    metaDisplay = `${(kpi.Meta * 100).toFixed(1)}%`;
+} else {
+    // Lógica original para números y moneda
+    const formatOptions = kpi.Unidad === '$' ? { style: 'currency', currency: 'MXN', minimumFractionDigits: 0 } : {};
+    metaDisplay = `${kpi.Meta.toLocaleString('es-MX', formatOptions)} ${kpi.Unidad === '$' ? '' : kpi.Unidad}`;
+}
             html += `<tr class="bg-white border-b hover:bg-gray-50"><th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">${kpi.Nombre_KPI}</th><td class="px-6 py-4">${kpi.Frecuencia}</td><td class="px-6 py-4">${metaDisplay}</td></tr>`;
         });
 
