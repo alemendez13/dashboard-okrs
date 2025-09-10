@@ -104,7 +104,7 @@
 
 <script>
     // --- CONEXIÓN A GOOGLE SHEETS ---
-    const GOOGLE_SHEET_API_URL = 'https://script.google.com/macros/s/AKfycbzINRjrsSq9pe_l-f2cdajWejNfJADQ79tkQ01mBGZ_Kg5tHXuk308373LtIzDOfd5f/exec'; 
+    const GOOGLE_SHEET_API_URL = 'https://script.google.com/macros/s/AKfycbxLb05QA26-ncE9JCp-LUiLTH8cwq9el5hZm9u8YLhGBc-7ij8MqMGdpZg4lYKd6GRN/exec'; 
 
     let appData = {};
     let currentUserId = 2; // Iniciar como Alejandra (admin)
@@ -168,7 +168,7 @@
             let krCount = 0;
 
             keyResults.forEach(kr => {
-                const kpis = appData.kpis.filter(kpi => kpi.ID_Resultado_C === kr.ID_Resultado_Clave);
+                const kpis = appData.kpis.filter(kpi => kpi.ID_Resultado_Clave === kr.ID_Resultado_Clave);
                 if (kpis.length > 0) {
                     const krProgress = kpis.reduce((acc, kpi) => {
                         const results = appData.results.filter(r => r.ID_KPI === kpi.ID_KPI);
