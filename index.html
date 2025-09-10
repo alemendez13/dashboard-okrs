@@ -476,11 +476,94 @@ if (kpi.Es_Financiero && !isAdmin) {
         content.innerHTML = html;
     }
 
-    function renderCatalogView() {
-         const content = document.getElementById('main-content');
-         document.getElementById('view-title').textContent = 'Catálogo';
-         content.innerHTML = `<div class="text-center p-10 bg-white rounded-lg border"><p class="text-gray-500">Vista "Catálogo" en construcción.</p></div>`;
+// --- NUEVA FUNCIÓN COMPLETA PARA "CATÁLOGO" ---
+
+function renderCatalogView() {
+    const content = document.getElementById('main-content');
+    document.getElementById('view-title').textContent = 'Catálogo de KPIs';
+
+    // Estructura principal con la barra de búsqueda y el esqueleto de la tabla
+    let html = `
+        <div class="space-y-6">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-800">Catálogo de Indicadores</h2>
+                <p class="mt-1 text-gray-600">Busca y explora todos los KPIs definidos en la organización.</p>
+            </div>
+            <div>
+                <input type="text" id="kpi-search" placeholder="🔎 Buscar por nombre, proceso, responsable..." 
+                       class="w-full md:w-1/2 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition">
+            </div>
+            <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left text-gray-500">
+                        <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3">Nombre del KPI</th>
+                                <th scope="col" class="px-6 py-3">Resultado Clave Asociado</th>
+                                <th scope="col" class="px-6 py-3">Proceso</th>
+                                <th scope="col" class="px-6 py-3">Responsable</th>
+                                <th scope="col" class="px-6 py-3">Frecuencia</th>
+                            </tr>
+                        </thead>
+                        <tbody id="kpi-catalog-body">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>`;
+    content.innerHTML = html;
+
+    // Llama a la función auxiliar para poblar la tabla con todos los KPIs
+    populateCatalogTable(appData.kpis);
+
+    // Añade el listener para la barra de búsqueda
+    const searchInput = document.getElementById('kpi-search');
+    searchInput.addEventListener('keyup', (event) => {
+        const searchTerm = event.target.value.toLowerCase();
+        const filteredKpis = appData.kpis.filter(kpi => {
+            const kr = appData.keyResults.find(kr => kr.ID_Resultado_Clave === kpi.ID_Resultado_Clave);
+            const process = appData.processes.find(p => p.ID_Proceso === kpi.ID_Proceso_Asc);
+            const user = appData.users.find(u => u.ID_Usuario == kpi.ID_Usuario_Res);
+
+            return kpi.Nombre_KPI.toLowerCase().includes(searchTerm) ||
+                   (kr && kr.Nombre_Resultado_Clave.toLowerCase().includes(searchTerm)) ||
+                   (process && process.Nombre_Proceso.toLowerCase().includes(searchTerm)) ||
+                   (user && user.Nombre_Completo.toLowerCase().includes(searchTerm));
+        });
+        populateCatalogTable(filteredKpis);
+    });
+}
+
+/**
+ * Función auxiliar que recibe una lista de KPIs y construye las filas de la tabla.
+ */
+function populateCatalogTable(kpiList) {
+    const tableBody = document.getElementById('kpi-catalog-body');
+    if (!tableBody) return;
+
+    if (kpiList.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="5" class="text-center p-6 text-gray-500">No se encontraron KPIs que coincidan con la búsqueda.</td></tr>`;
+        return;
     }
+
+    let tableHtml = '';
+    kpiList.forEach(kpi => {
+        // Buscamos los nombres correspondientes a los IDs
+        const krName = appData.keyResults.find(kr => kr.ID_Resultado_Clave === kpi.ID_Resultado_Clave)?.Nombre_Resultado_Clave || '<em class="text-gray-400">N/A</em>';
+        const processName = appData.processes.find(p => p.ID_Proceso === kpi.ID_Proceso_Asc)?.Nombre_Proceso || '<em class="text-gray-400">N/A</em>';
+        const userName = appData.users.find(u => u.ID_Usuario == kpi.ID_Usuario_Res)?.Nombre_Completo || '<em class="text-gray-400">N/A</em>';
+
+        tableHtml += `
+            <tr class="bg-white border-b hover:bg-gray-50">
+                <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">${kpi.Nombre_KPI}</th>
+                <td class="px-6 py-4">${krName}</td>
+                <td class="px-6 py-4">${processName}</td>
+                <td class="px-6 py-4">${userName}</td>
+                <td class="px-6 py-4">${kpi.Frecuencia}</td>
+            </tr>`;
+    });
+    tableBody.innerHTML = tableHtml;
+}
     
     function renderAdminView() {
          const content = document.getElementById('main-content');
