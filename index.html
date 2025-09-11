@@ -39,120 +39,172 @@
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
 </head>
-<body class="flex h-screen overflow-hidden">
+<body class="bg-gray-100">
 
-    <!-- Barra de Navegación Lateral -->
-    <aside class="w-64 flex-shrink-0 bg-white border-r border-gray-200 flex flex-col">
-        <div class="h-16 flex items-center justify-center px-6 border-b border-gray-200">
-            <img src="logo.png" alt="Logo de SANSCE" class="h-10 w-auto">
-        </div>
-        <nav class="flex-1 overflow-y-auto pt-6">
-            <p class="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Tableros</p>
-            <ul class="px-4 mt-2 space-y-2">
-                <li><a href="#" id="nav-dashboard" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-600 hover:bg-gray-100 active-nav">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
-                    Dashboard General
-                </a></li>
-                <li><a href="#" id="nav-tactical" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-600 hover:bg-gray-100">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 8v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
-                    Vista Táctica
-                </a></li>
-                <li><a href="#" id="nav-personal" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-600 hover:bg-gray-100">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                    Mi Tablero Personal
-                </a></li>
-            </ul>
-             <p class="mt-8 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Gestión</p>
-            <ul class="px-4 mt-2 space-y-2">
-                 <li><a href="#" id="nav-assignments" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-600 hover:bg-gray-100">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
-                    Mis Asignaciones
-                </a></li>
-                <li><a href="#" id="nav-catalog" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-600 hover:bg-gray-100">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path></svg>
-                    Catálogo
-                </a></li>
-                <li><a href="#" id="nav-admin" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-600 hover:bg-gray-100">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
-                    Administración
-                </a></li>
-            </ul>
-        </nav>
-        <div class="p-4 border-t border-gray-200">
-            <div id="user-profile" class="flex items-center">
-                <!-- User profile will be dynamically inserted here -->
+    <div id="login-container" class="flex items-center justify-center min-h-screen">
+        <div class="w-full max-w-md p-8 space-y-6 bg-white rounded-xl shadow-lg">
+            <div class="text-center">
+                <img src="logo.png" alt="Logo de SANSCE" class="w-auto h-12 mx-auto">
+                <h2 class="mt-6 text-2xl font-bold text-gray-900">Iniciar Sesión</h2>
+                <p class="mt-2 text-sm text-gray-600">Ingresa a tu dashboard de OKRs y Desempeño</p>
             </div>
+            <form id="login-form" class="space-y-6">
+                <div>
+                    <label for="email" class="text-sm font-medium text-gray-700">Correo Electrónico</label>
+                    <input id="email" name="email" type="email" required class="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500" placeholder="tu@email.com">
+                </div>
+                <div>
+                    <label for="password" class="text-sm font-medium text-gray-700">Contraseña</label>
+                    <input id="password" name="password" type="password" required class="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500" placeholder="••••••••">
+                </div>
+                <div>
+                    <button type="submit" class="w-full px-4 py-2 font-semibold text-white bg-sky-600 rounded-md hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500">
+                        Ingresar
+                    </button>
+                </div>
+                <p id="login-error" class="text-sm text-center text-red-600"></p>
+            </form>
         </div>
-    </aside>
+    </div>
 
-    <!-- Contenido Principal -->
-    <main class="flex-1 overflow-y-auto">
-        <header class="h-16 flex items-center justify-between px-8 border-b border-gray-200 bg-white sticky top-0">
-            <h1 id="view-title" class="text-xl font-semibold text-gray-900">Cargando...</h1>
-        </header>
-
-        <div id="main-content" class="p-8">
-            <div id="loader">
-                <svg class="animate-spin h-8 w-8 text-sky-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                <p class="text-gray-600">Obteniendo datos desde Google Sheets...</p>
+    <div id="app-container" class="flex h-screen overflow-hidden" style="display: none;">
+        <aside class="w-64 flex-shrink-0 bg-white border-r border-gray-200 flex flex-col">
+            <div class="h-16 flex items-center justify-center px-6 border-b border-gray-200">
+                <img src="logo.png" alt="Logo de SANSCE" class="h-10 w-auto">
             </div>
-        </div>
-    </main>
+            <nav class="flex-1 overflow-y-auto pt-6">
+                <p class="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Tableros</p>
+                <ul class="px-4 mt-2 space-y-2">
+                    <li><a href="#" id="nav-dashboard" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-600 hover:bg-gray-100 active-nav">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                        Dashboard General
+                    </a></li>
+                    <li><a href="#" id="nav-tactical" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-600 hover:bg-gray-100">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 8v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                        Vista Táctica
+                    </a></li>
+                    <li><a href="#" id="nav-personal" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-600 hover:bg-gray-100">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                        Mi Tablero Personal
+                    </a></li>
+                </ul>
+                <p class="mt-8 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Gestión</p>
+                <ul class="px-4 mt-2 space-y-2">
+                    <li><a href="#" id="nav-assignments" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-600 hover:bg-gray-100">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+                        Mis Asignaciones
+                    </a></li>
+                    <li><a href="#" id="nav-catalog" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-600 hover:bg-gray-100">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path></svg>
+                        Catálogo
+                    </a></li>
+                    <li><a href="#" id="nav-admin" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-600 hover:bg-gray-100">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                        Administración
+                    </a></li>
+                </ul>
+            </nav>
+            <div class="p-4 border-t border-gray-200">
+                <div id="user-profile" class="flex items-center">
+                    </div>
+            </div>
+        </aside>
+
+        <main class="flex-1 overflow-y-auto">
+            <header class="h-16 flex items-center justify-between px-8 border-b border-gray-200 bg-white sticky top-0">
+                <h1 id="view-title" class="text-xl font-semibold text-gray-900">Cargando...</h1>
+            </header>
+            <div id="main-content" class="p-8">
+                <div id="loader">
+                     <svg class="animate-spin h-8 w-8 text-sky-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                    <p class="text-gray-600">Cargando...</p>
+                </div>
+            </div>
+        </main>
+    </div>
 
 <script>
+    // --- ELEMENTOS DEL DOM ---
+    const loginContainer = document.getElementById('login-container');
+    const appContainer = document.getElementById('app-container');
+    const loginForm = document.getElementById('login-form');
+    const loginError = document.getElementById('login-error');
+
     // --- CONEXIÓN A GOOGLE SHEETS ---
     const GOOGLE_SHEET_API_URL = 'https://script.google.com/macros/s/AKfycbxLb05QA26-ncE9JCp-LUiLTH8cwq9el5hZm9u8YLhGBc-7ij8MqMGdpZg4lYKd6GRN/exec'; 
 
+    // --- ESTADO DE LA APLICACIÓN ---
     let appData = {};
-    let currentUserId = 2; // Iniciar como Alejandra (admin)
+    let currentUserId = null; // El usuario inicia como nulo
     let currentUser = {};
     let isAdmin = false;
 
+    // --- LÓGICA DE AUTENTICACIÓN ---
+    async function handleLogin(event) {
+        event.preventDefault();
+        loginError.textContent = '';
+        const email = event.target.email.value;
+        const password = event.target.password.value;
+
+        if (!appData.users || appData.users.length === 0) {
+            loginError.textContent = 'Los datos de usuario no se han cargado. Intenta de nuevo.';
+            return;
+        }
+
+        const user = appData.users.find(u => u.Email && u.Email.toLowerCase() === email.toLowerCase());
+
+        // ADVERTENCIA: Esta es una validación insegura, solo para prototipos.
+        if (user && user.Contraseña === password) {
+            // ¡Éxito!
+            currentUserId = user.ID_Usuario;
+            loginContainer.style.display = 'none';
+            appContainer.style.display = 'flex';
+            initializeApp();
+        } else {
+            // Fallo
+            loginError.textContent = 'Correo o contraseña incorrectos.';
+        }
+    }
+
+    function handleLogout() {
+        // La forma más sencilla de cerrar sesión es recargar la página
+        location.reload();
+    }
+
+    // --- MANEJO DE DATOS ---
     async function fetchData() {
         try {
             const response = await fetch(GOOGLE_SHEET_API_URL);
-            if (!response.ok) throw new Error('Respuesta de red no fue exitosa. Verifica la URL y los permisos del script.');
+            if (!response.ok) throw new Error('Respuesta de red no fue exitosa.');
             
             const rawData = await response.json();
-            console.log("Datos recibidos de Google Sheet:", rawData); // Ayuda para depurar
+            console.log("Datos recibidos de Google Sheet:", rawData);
             appData = processRawData(rawData);
-            initializeApp();
+            
+            // Ya no iniciamos la app aquí, solo dejamos los datos listos.
 
         } catch (error) {
-            document.getElementById('main-content').innerHTML = `<div class="text-center p-10 bg-red-50 border border-red-200 rounded-lg"><h3 class="font-semibold text-red-800">Error de Conexión</h3><p class="mt-2 text-red-700">${error.message}</p><p class="mt-2 text-sm text-red-600">Asegúrate de haber publicado tu script con acceso para 'Cualquier persona' y que los nombres de las pestañas en tu Google Sheet sean correctos (ej. 'Resultados_Clave').</p></div>`;
+            loginError.textContent = `Error de conexión: ${error.message}`;
         }
     }
     
     function processRawData(data) {
+        // (Esta función permanece igual que antes)
         const expectedKeys = ['users', 'objectives', 'keyResults', 'processes', 'kpis', 'results'];
         const cleanData = {};
-
         expectedKeys.forEach(key => {
             if (data[key] && Array.isArray(data[key])) {
                 cleanData[key] = data[key].filter(row => row && Object.values(row).some(val => val !== null && val !== ''));
-            } else {
-                cleanData[key] = []; // Si una lista no viene, se crea vacía para evitar errores
-            }
+            } else { cleanData[key] = []; }
         });
-        
-        cleanData.kpis = cleanData.kpis.map(kpi => ({
-            ...kpi,
-            Meta: parseFloat(kpi.Meta) || 0,
-            Es_Financiero: String(kpi.Es_Financiero).toLowerCase() === 'verdadero'
-        }));
-
-        cleanData.results = cleanData.results.map(res => ({
-            ...res,
-            Valor: parseFloat(res.Valor) || 0
-        }));
-
+        cleanData.kpis = cleanData.kpis.map(kpi => ({ ...kpi, Meta: parseFloat(kpi.Meta) || 0, Es_Financiero: String(kpi.Es_Financiero).toLowerCase() === 'verdadero' }));
+        cleanData.results = cleanData.results.map(res => ({ ...res, Valor: parseFloat(res.Valor) || 0 }));
         return cleanData;
     }
 
-    // --- RENDER FUNCTIONS ---
+    // --- RENDER FUNCTIONS (Las funciones de renderizado como renderDashboard, renderTacticalView, etc., permanecen aquí sin cambios) ---
+    
+    // (Pega aquí TODAS tus funciones de renderizado: renderDashboard, renderTacticalView, renderPersonalView, renderMyAssignmentsView, renderCatalogView, renderAdminView y sus funciones auxiliares como populateCatalogTable y renderPersonalCharts)
     function renderDashboard() {
         const content = document.getElementById('main-content');
         document.getElementById('view-title').textContent = 'Dashboard General';
@@ -201,7 +253,7 @@
                         <div class="space-y-5">`;
 
             keyResults.forEach(kr => {
-                const kpis = appData.kpis.filter(kpi => kpi.ID_Resultado_C === kr.ID_Resultado_Clave); 
+                const kpis = appData.kpis.filter(kpi => kpi.ID_Resultado_Clave === kr.ID_Resultado_Clave); 
                  let current = 0, target = 0;
                  let isFinancial = false;
                  let unit = '';
@@ -216,10 +268,13 @@
 
                 const progress = target > 0 ? Math.min((current / target) * 100, 100) : 0;
                 let metaDetails;
-
+                
                 if (isFinancial && !isAdmin) {
                     metaDetails = `Progreso: <span class="font-semibold">${progress.toFixed(1)}%</span>`;
-                } else {
+                } else if (unit === '%') {
+                    metaDetails = `Meta: ${(target*100).toFixed(1)}% | Actual: ${(current*100).toFixed(1)}%`;
+                }
+                else {
                     const formatOptions = unit === '$' ? { style: 'currency', currency: 'MXN', minimumFractionDigits: 0 } : {};
                     metaDetails = `Meta: ${target.toLocaleString('es-MX', formatOptions)} | Actual: ${current.toLocaleString('es-MX', formatOptions)}`;
                 }
@@ -269,15 +324,12 @@
                     const target = kpi.Meta;
                     const progress = target > 0 ? Math.min((current / target) * 100, 100) : 0;
                     
-            // --- NUEVO BLOQUE CORREGIDO ---
             let metaDetails;
             if (kpi.Es_Financiero && !isAdmin) {
                 metaDetails = `${progress.toFixed(1)}%`;
             } else if (kpi.Unidad === '%') {
-                // Si la unidad es %, multiplica por 100 y añade el símbolo
                 metaDetails = `${(current * 100).toFixed(1)}% / ${(target * 100).toFixed(1)}%`;
             } else {
-                // Lógica original para números y moneda
                 const formatOptions = kpi.Unidad === '$' ? { style: 'currency', currency: 'MXN', minimumFractionDigits: 0 } : {};
                 metaDetails = `${current.toLocaleString('es-MX', formatOptions)} / ${target.toLocaleString('es-MX', formatOptions)}`;
             }
@@ -299,150 +351,101 @@
         addAccordionListeners();
     }
     
-// --- NUEVA FUNCIÓN COMPLETA PARA "MI TABLERO PERSONAL" ---
+    function renderPersonalView() {
+        const content = document.getElementById('main-content');
+        document.getElementById('view-title').textContent = 'Mi Tablero Personal';
+        const userKpis = appData.kpis.filter(kpi => kpi.ID_Usuario_Res == currentUserId);
 
-function renderPersonalView() {
-    const content = document.getElementById('main-content');
-    document.getElementById('view-title').textContent = 'Mi Tablero Personal';
-    const userKpis = appData.kpis.filter(kpi => kpi.ID_Usuario_Res == currentUserId);
-
-    if (userKpis.length === 0) {
-        content.innerHTML = `<div class="text-center p-10 bg-white rounded-lg border"><p class="text-gray-500">Aún no tienes KPIs asignados.</p></div>`;
-        return;
-    }
-
-    // --- Cálculos para las tarjetas de resumen ---
-    let totalProgressSum = 0;
-    let kpisWithTarget = 0;
-    const involvedProcesses = new Set();
-
-    userKpis.forEach(kpi => {
-        const results = appData.results.filter(r => r.ID_KPI === kpi.ID_KPI);
-        const current = results.length > 0 ? results.sort((a,b) => new Date(b.Fecha) - new Date(a.Fecha))[0].Valor : 0;
-        if (kpi.Meta > 0) {
-            totalProgressSum += Math.min((current / kpi.Meta), 1); // Suma el progreso (0 a 1)
-            kpisWithTarget++;
-        }
-        const process = appData.processes.find(p => p.ID_Proceso === kpi.ID_Proceso_Asc);
-        if (process) involvedProcesses.add(process.Nombre_Proceso);
-    });
-
-    const averageProgress = kpisWithTarget > 0 ? (totalProgressSum / kpisWithTarget) * 100 : 0;
-    const userFirstName = currentUser.Nombre_Completo ? currentUser.Nombre_Completo.split(' ')[0] : 'Usuario';
-
-    // --- Construcción del HTML ---
-    let html = `
-        <div class="space-y-8">
-            <div>
-                <h2 class="text-2xl font-bold text-gray-800">Hola, ${userFirstName} 👋</h2>
-                <p class="mt-1 text-gray-600">Este es tu resumen de desempeño personal.</p>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="bg-white p-6 rounded-xl border border-gray-200 flex items-center gap-5">
-                    <div class="bg-sky-100 text-sky-600 p-3 rounded-full"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg></div>
-                    <div><p class="text-sm text-gray-500">KPIs Asignados</p><p class="text-2xl font-bold text-gray-800">${userKpis.length}</p></div>
-                </div>
-                <div class="bg-white p-6 rounded-xl border border-gray-200 flex items-center gap-5">
-                     <div class="bg-teal-100 text-teal-600 p-3 rounded-full"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg></div>
-                    <div><p class="text-sm text-gray-500">Progreso Promedio</p><p class="text-2xl font-bold text-gray-800">${averageProgress.toFixed(1)}%</p></div>
-                </div>
-                <div class="bg-white p-6 rounded-xl border border-gray-200 flex items-center gap-5">
-                     <div class="bg-indigo-100 text-indigo-600 p-3 rounded-full"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 8v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg></div>
-                    <div><p class="text-sm text-gray-500">Procesos Involucrados</p><p class="text-2xl font-bold text-gray-800">${involvedProcesses.size}</p></div>
-                </div>
-            </div>
-
-            <div>
-                <h3 class="text-xl font-bold text-gray-800 mb-4">Detalle de mis KPIs</h3>
-                <div class="space-y-4">`;
-
-    userKpis.forEach(kpi => {
-        const results = appData.results.filter(r => r.ID_KPI === kpi.ID_KPI).sort((a,b) => new Date(a.Fecha) - new Date(b.Fecha));
-        const current = results.length > 0 ? results[results.length - 1].Valor : 0;
-        const target = kpi.Meta;
-        const progress = target > 0 ? Math.min((current / target) * 100, 100) : 0;
-        const processName = appData.processes.find(p => p.ID_Proceso === kpi.ID_Proceso_Asc)?.Nombre_Proceso || 'N/A';
-
-        let metaDisplay;
-        if (kpi.Unidad === '%') {
-            metaDisplay = `${(current * 100).toFixed(1)}% / ${(target * 100).toFixed(1)}%`;
-        } else {
-            const formatOptions = kpi.Unidad === '$' ? { style: 'currency', currency: 'MXN', minimumFractionDigits: 0 } : {};
-            metaDisplay = `${current.toLocaleString('es-MX', formatOptions)} / ${target.toLocaleString('es-MX', formatOptions)}`;
+        if (userKpis.length === 0) {
+            content.innerHTML = `<div class="text-center p-10 bg-white rounded-lg border"><p class="text-gray-500">Aún no tienes KPIs asignados.</p></div>`;
+            return;
         }
 
-        html += `
-            <div class="bg-white p-5 rounded-xl border border-gray-200 grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
-                <div class="md:col-span-1">
-                    <p class="font-semibold text-gray-800">${kpi.Nombre_KPI}</p>
-                    <p class="text-sm text-gray-500">${processName}</p>
+        let totalProgressSum = 0;
+        let kpisWithTarget = 0;
+        const involvedProcesses = new Set();
+
+        userKpis.forEach(kpi => {
+            const results = appData.results.filter(r => r.ID_KPI === kpi.ID_KPI);
+            const current = results.length > 0 ? results.sort((a,b) => new Date(b.Fecha) - new Date(a.Fecha))[0].Valor : 0;
+            if (kpi.Meta > 0) {
+                totalProgressSum += Math.min((current / kpi.Meta), 1); 
+                kpisWithTarget++;
+            }
+            const process = appData.processes.find(p => p.ID_Proceso === kpi.ID_Proceso_Asc);
+            if (process) involvedProcesses.add(process.Nombre_Proceso);
+        });
+
+        const averageProgress = kpisWithTarget > 0 ? (totalProgressSum / kpisWithTarget) * 100 : 0;
+        const userFirstName = currentUser.Nombre_Completo ? currentUser.Nombre_Completo.split(' ')[0] : 'Usuario';
+
+        let html = `
+            <div class="space-y-8">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-800">Hola, ${userFirstName} 👋</h2>
+                    <p class="mt-1 text-gray-600">Este es tu resumen de desempeño personal.</p>
                 </div>
-                <div class="md:col-span-1">
-                    <div class="flex justify-between items-center text-sm mb-1">
-                        <span class="text-gray-600">Progreso</span>
-                        <span class="font-semibold ${progress >= 80 ? 'text-green-600' : 'text-amber-600'}">${progress.toFixed(1)}%</span>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-white p-6 rounded-xl border border-gray-200 flex items-center gap-5">
+                        <div class="bg-sky-100 text-sky-600 p-3 rounded-full"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg></div>
+                        <div><p class="text-sm text-gray-500">KPIs Asignados</p><p class="text-2xl font-bold text-gray-800">${userKpis.length}</p></div>
                     </div>
-                    <div class="w-full bg-gray-200 rounded-full h-2"><div class="bg-gradient-to-r ${progress >= 80 ? 'from-green-400 to-green-500' : 'from-amber-400 to-amber-500'} h-2 rounded-full" style="width: ${progress}%"></div></div>
-                    <p class="text-xs text-right text-gray-500 mt-1">${metaDisplay}</p>
+                    <div class="bg-white p-6 rounded-xl border border-gray-200 flex items-center gap-5">
+                        <div class="bg-teal-100 text-teal-600 p-3 rounded-full"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg></div>
+                        <div><p class="text-sm text-gray-500">Progreso Promedio</p><p class="text-2xl font-bold text-gray-800">${averageProgress.toFixed(1)}%</p></div>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl border border-gray-200 flex items-center gap-5">
+                        <div class="bg-indigo-100 text-indigo-600 p-3 rounded-full"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 8v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg></div>
+                        <div><p class="text-sm text-gray-500">Procesos Involucrados</p><p class="text-2xl font-bold text-gray-800">${involvedProcesses.size}</p></div>
+                    </div>
                 </div>
-                <div class="md:col-span-1 h-20">
-                    <canvas id="chart-kpi-${kpi.ID_KPI}"></canvas>
-                </div>
-            </div>`;
-    });
 
-    html += `</div></div></div>`;
-    content.innerHTML = html;
+                <div>
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">Detalle de mis KPIs</h3>
+                    <div class="space-y-4">`;
 
-    // ¡Importante! Llamamos a la función que crea las gráficas DESPUÉS de añadir el HTML al DOM
-    renderPersonalCharts(userKpis);
-}
+        userKpis.forEach(kpi => {
+            const results = appData.results.filter(r => r.ID_KPI === kpi.ID_KPI).sort((a,b) => new Date(a.Fecha) - new Date(b.Fecha));
+            const current = results.length > 0 ? results[results.length - 1].Valor : 0;
+            const target = kpi.Meta;
+            const progress = target > 0 ? Math.min((current / target) * 100, 100) : 0;
+            const processName = appData.processes.find(p => p.ID_Proceso === kpi.ID_Proceso_Asc)?.Nombre_Proceso || 'N/A';
+            let metaDisplay;
+            if (kpi.Unidad === '%') {
+                metaDisplay = `${(current * 100).toFixed(1)}% / ${(target * 100).toFixed(1)}%`;
+            } else {
+                const formatOptions = kpi.Unidad === '$' ? { style: 'currency', currency: 'MXN', minimumFractionDigits: 0 } : {};
+                metaDisplay = `${current.toLocaleString('es-MX', formatOptions)} / ${target.toLocaleString('es-MX', formatOptions)}`;
+            }
 
-/**
- * Función auxiliar para renderizar las gráficas de historial para cada KPI.
- * Se debe llamar DESPUÉS de que renderPersonalView haya construido el HTML.
- */
-function renderPersonalCharts(userKpis) {
-    userKpis.forEach(kpi => {
-        const chartCanvas = document.getElementById(`chart-kpi-${kpi.ID_KPI}`);
-        if (chartCanvas) {
-            const historicalResults = appData.results
-                .filter(r => r.ID_KPI === kpi.ID_KPI)
-                .sort((a,b) => new Date(a.Fecha) - new Date(b.Fecha));
-
-            const labels = historicalResults.map(r => new Date(r.Fecha).toLocaleDateString('es-MX', { month: 'short', day: 'numeric' }));
-            const dataPoints = historicalResults.map(r => r.Valor);
-
-            new Chart(chartCanvas, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Valor',
-                        data: dataPoints,
-                        borderColor: '#0ea5e9', // sky-500
-                        backgroundColor: 'rgba(14, 165, 233, 0.1)',
-                        borderWidth: 2,
-                        pointRadius: 2,
-                        pointBackgroundColor: '#0284c7', // sky-600
-                        tension: 0.3,
-                        fill: true,
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false }, tooltip: { enabled: true } },
-                    scales: {
-                        x: { display: false },
-                        y: { display: false }
-                    }
-                }
-            });
-        }
-    });
-}
+            html += `
+                <div class="bg-white p-5 rounded-xl border border-gray-200 grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
+                    <div class="md:col-span-1"><p class="font-semibold text-gray-800">${kpi.Nombre_KPI}</p><p class="text-sm text-gray-500">${processName}</p></div>
+                    <div class="md:col-span-1">
+                        <div class="flex justify-between items-center text-sm mb-1"><span class="text-gray-600">Progreso</span><span class="font-semibold ${progress >= 80 ? 'text-green-600' : 'text-amber-600'}">${progress.toFixed(1)}%</span></div>
+                        <div class="w-full bg-gray-200 rounded-full h-2"><div class="bg-gradient-to-r ${progress >= 80 ? 'from-green-400 to-green-500' : 'from-amber-400 to-amber-500'} h-2 rounded-full" style="width: ${progress}%"></div></div>
+                        <p class="text-xs text-right text-gray-500 mt-1">${metaDisplay}</p>
+                    </div>
+                    <div class="md:col-span-1 h-20"><canvas id="chart-kpi-${kpi.ID_KPI}"></canvas></div>
+                </div>`;
+        });
+        html += `</div></div></div>`;
+        content.innerHTML = html;
+        renderPersonalCharts(userKpis);
+    }
+    
+    function renderPersonalCharts(userKpis) {
+        userKpis.forEach(kpi => {
+            const chartCanvas = document.getElementById(`chart-kpi-${kpi.ID_KPI}`);
+            if (chartCanvas) {
+                const historicalResults = appData.results.filter(r => r.ID_KPI === kpi.ID_KPI).sort((a,b) => new Date(a.Fecha) - new Date(b.Fecha));
+                const labels = historicalResults.map(r => new Date(r.Fecha).toLocaleDateString('es-MX', { month: 'short', day: 'numeric' }));
+                const dataPoints = historicalResults.map(r => r.Valor);
+                new Chart(chartCanvas, {type: 'line',data: {labels: labels,datasets: [{label: 'Valor',data: dataPoints,borderColor: '#0ea5e9',backgroundColor: 'rgba(14, 165, 233, 0.1)',borderWidth: 2,pointRadius: 2,pointBackgroundColor: '#0284c7',tension: 0.3,fill: true,}]},options: {responsive: true,maintainAspectRatio: false,plugins: { legend: { display: false }, tooltip: { enabled: true } },scales: {x: { display: false },y: { display: false }}}});
+            }
+        });
+    }
 
     function renderMyAssignmentsView() {
         const content = document.getElementById('main-content');
@@ -455,115 +458,61 @@ function renderPersonalCharts(userKpis) {
         }
 
         let html = `<div class="bg-white rounded-xl border border-gray-200 shadow-sm"><div class="overflow-x-auto"><table class="w-full text-sm text-left text-gray-500"><thead class="text-xs text-gray-700 uppercase bg-gray-50"><tr><th scope="col" class="px-6 py-3">Nombre del KPI</th><th scope="col" class="px-6 py-3">Frecuencia</th><th scope="col" class="px-6 py-3">Meta</th></tr></thead><tbody>`;
-        
         assignedKpis.forEach(kpi => {
-            // --- NUEVO BLOQUE CORREGIDO ---
-let metaDisplay;
-if (kpi.Es_Financiero && !isAdmin) {
-    metaDisplay = `Objetivo de Progreso`;
-} else if (kpi.Unidad === '%') {
-    // Si la unidad es %, multiplica por 100 y muestra como porcentaje
-    metaDisplay = `${(kpi.Meta * 100).toFixed(1)}%`;
-} else {
-    // Lógica original para números y moneda
-    const formatOptions = kpi.Unidad === '$' ? { style: 'currency', currency: 'MXN', minimumFractionDigits: 0 } : {};
-    metaDisplay = `${kpi.Meta.toLocaleString('es-MX', formatOptions)} ${kpi.Unidad === '$' ? '' : kpi.Unidad}`;
-}
+            let metaDisplay;
+            if (kpi.Es_Financiero && !isAdmin) { metaDisplay = `Objetivo de Progreso`;} 
+            else if (kpi.Unidad === '%') { metaDisplay = `${(kpi.Meta * 100).toFixed(1)}%`;} 
+            else { const formatOptions = kpi.Unidad === '$' ? { style: 'currency', currency: 'MXN', minimumFractionDigits: 0 } : {}; metaDisplay = `${kpi.Meta.toLocaleString('es-MX', formatOptions)} ${kpi.Unidad === '$' ? '' : kpi.Unidad}`; }
             html += `<tr class="bg-white border-b hover:bg-gray-50"><th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">${kpi.Nombre_KPI}</th><td class="px-6 py-4">${kpi.Frecuencia}</td><td class="px-6 py-4">${metaDisplay}</td></tr>`;
         });
-
         html += `</tbody></table></div></div>`;
         content.innerHTML = html;
     }
 
-// --- NUEVA FUNCIÓN COMPLETA PARA "CATÁLOGO" ---
-
-function renderCatalogView() {
-    const content = document.getElementById('main-content');
-    document.getElementById('view-title').textContent = 'Catálogo de KPIs';
-
-    // Estructura principal con la barra de búsqueda y el esqueleto de la tabla
-    let html = `
-        <div class="space-y-6">
-            <div>
-                <h2 class="text-2xl font-bold text-gray-800">Catálogo de Indicadores</h2>
-                <p class="mt-1 text-gray-600">Busca y explora todos los KPIs definidos en la organización.</p>
-            </div>
-            <div>
-                <input type="text" id="kpi-search" placeholder="🔎 Buscar por nombre, proceso, responsable..." 
-                       class="w-full md:w-1/2 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition">
-            </div>
-            <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm text-left text-gray-500">
-                        <thead class="text-xs text-gray-700 uppercase bg-gray-50">
-                            <tr>
-                                <th scope="col" class="px-6 py-3">Nombre del KPI</th>
-                                <th scope="col" class="px-6 py-3">Resultado Clave Asociado</th>
-                                <th scope="col" class="px-6 py-3">Proceso</th>
-                                <th scope="col" class="px-6 py-3">Responsable</th>
-                                <th scope="col" class="px-6 py-3">Frecuencia</th>
-                            </tr>
-                        </thead>
-                        <tbody id="kpi-catalog-body">
-                            </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>`;
-    content.innerHTML = html;
-
-    // Llama a la función auxiliar para poblar la tabla con todos los KPIs
-    populateCatalogTable(appData.kpis);
-
-    // Añade el listener para la barra de búsqueda
-    const searchInput = document.getElementById('kpi-search');
-    searchInput.addEventListener('keyup', (event) => {
-        const searchTerm = event.target.value.toLowerCase();
-        const filteredKpis = appData.kpis.filter(kpi => {
-            const kr = appData.keyResults.find(kr => kr.ID_Resultado_Clave === kpi.ID_Resultado_Clave);
-            const process = appData.processes.find(p => p.ID_Proceso === kpi.ID_Proceso_Asc);
-            const user = appData.users.find(u => u.ID_Usuario == kpi.ID_Usuario_Res);
-
-            return kpi.Nombre_KPI.toLowerCase().includes(searchTerm) ||
-                   (kr && kr.Nombre_Resultado_Clave.toLowerCase().includes(searchTerm)) ||
-                   (process && process.Nombre_Proceso.toLowerCase().includes(searchTerm)) ||
-                   (user && user.Nombre_Completo.toLowerCase().includes(searchTerm));
+    function renderCatalogView() {
+        const content = document.getElementById('main-content');
+        document.getElementById('view-title').textContent = 'Catálogo de KPIs';
+        let html = `
+            <div class="space-y-6">
+                <div><h2 class="text-2xl font-bold text-gray-800">Catálogo de Indicadores</h2><p class="mt-1 text-gray-600">Busca y explora todos los KPIs definidos en la organización.</p></div>
+                <div><input type="text" id="kpi-search" placeholder="🔎 Buscar por nombre, proceso, responsable..." class="w-full md:w-1/2 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition"></div>
+                <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden"><div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left text-gray-500"><thead class="text-xs text-gray-700 uppercase bg-gray-50"><tr>
+                        <th scope="col" class="px-6 py-3">Nombre del KPI</th><th scope="col" class="px-6 py-3">Resultado Clave Asociado</th><th scope="col" class="px-6 py-3">Proceso</th><th scope="col" class="px-6 py-3">Responsable</th><th scope="col" class="px-6 py-3">Frecuencia</th>
+                    </tr></thead><tbody id="kpi-catalog-body"></tbody></table>
+                </div></div>
+            </div>`;
+        content.innerHTML = html;
+        populateCatalogTable(appData.kpis);
+        const searchInput = document.getElementById('kpi-search');
+        searchInput.addEventListener('keyup', (event) => {
+            const searchTerm = event.target.value.toLowerCase();
+            const filteredKpis = appData.kpis.filter(kpi => {
+                const kr = appData.keyResults.find(kr => kr.ID_Resultado_Clave === kpi.ID_Resultado_Clave);
+                const process = appData.processes.find(p => p.ID_Proceso === kpi.ID_Proceso_Asc);
+                const user = appData.users.find(u => u.ID_Usuario == kpi.ID_Usuario_Res);
+                return kpi.Nombre_KPI.toLowerCase().includes(searchTerm) ||
+                       (kr && kr.Nombre_Resultado_Clave.toLowerCase().includes(searchTerm)) ||
+                       (process && process.Nombre_Proceso.toLowerCase().includes(searchTerm)) ||
+                       (user && user.Nombre_Completo.toLowerCase().includes(searchTerm));
+            });
+            populateCatalogTable(filteredKpis);
         });
-        populateCatalogTable(filteredKpis);
-    });
-}
-
-/**
- * Función auxiliar que recibe una lista de KPIs y construye las filas de la tabla.
- */
-function populateCatalogTable(kpiList) {
-    const tableBody = document.getElementById('kpi-catalog-body');
-    if (!tableBody) return;
-
-    if (kpiList.length === 0) {
-        tableBody.innerHTML = `<tr><td colspan="5" class="text-center p-6 text-gray-500">No se encontraron KPIs que coincidan con la búsqueda.</td></tr>`;
-        return;
     }
-
-    let tableHtml = '';
-    kpiList.forEach(kpi => {
-        // Buscamos los nombres correspondientes a los IDs
-        const krName = appData.keyResults.find(kr => kr.ID_Resultado_Clave === kpi.ID_Resultado_Clave)?.Nombre_Resultado_Clave || '<em class="text-gray-400">N/A</em>';
-        const processName = appData.processes.find(p => p.ID_Proceso === kpi.ID_Proceso_Asc)?.Nombre_Proceso || '<em class="text-gray-400">N/A</em>';
-        const userName = appData.users.find(u => u.ID_Usuario == kpi.ID_Usuario_Res)?.Nombre_Completo || '<em class="text-gray-400">N/A</em>';
-
-        tableHtml += `
-            <tr class="bg-white border-b hover:bg-gray-50">
-                <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">${kpi.Nombre_KPI}</th>
-                <td class="px-6 py-4">${krName}</td>
-                <td class="px-6 py-4">${processName}</td>
-                <td class="px-6 py-4">${userName}</td>
-                <td class="px-6 py-4">${kpi.Frecuencia}</td>
-            </tr>`;
-    });
-    tableBody.innerHTML = tableHtml;
-}
+    
+    function populateCatalogTable(kpiList) {
+        const tableBody = document.getElementById('kpi-catalog-body');
+        if (!tableBody) return;
+        if (kpiList.length === 0) { tableBody.innerHTML = `<tr><td colspan="5" class="text-center p-6 text-gray-500">No se encontraron KPIs.</td></tr>`; return; }
+        let tableHtml = '';
+        kpiList.forEach(kpi => {
+            const krName = appData.keyResults.find(kr => kr.ID_Resultado_Clave === kpi.ID_Resultado_Clave)?.Nombre_Resultado_Clave || '<em class="text-gray-400">N/A</em>';
+            const processName = appData.processes.find(p => p.ID_Proceso === kpi.ID_Proceso_Asc)?.Nombre_Proceso || '<em class="text-gray-400">N/A</em>';
+            const userName = appData.users.find(u => u.ID_Usuario == kpi.ID_Usuario_Res)?.Nombre_Completo || '<em class="text-gray-400">N/A</em>';
+            tableHtml += `<tr class="bg-white border-b hover:bg-gray-50"><th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">${kpi.Nombre_KPI}</th><td class="px-6 py-4">${krName}</td><td class="px-6 py-4">${processName}</td><td class="px-6 py-4">${userName}</td><td class="px-6 py-4">${kpi.Frecuencia}</td></tr>`;
+        });
+        tableBody.innerHTML = tableHtml;
+    }
     
     function renderAdminView() {
          const content = document.getElementById('main-content');
@@ -571,15 +520,13 @@ function populateCatalogTable(kpiList) {
          content.innerHTML = `<div class="text-center p-10 bg-white rounded-lg border"><p class="text-gray-500">Vista "Administración" en construcción.</p></div>`;
     }
 
+    // --- INICIALIZACIÓN Y HELPERS ---
     function addAccordionListeners() {
         document.querySelectorAll('.accordion-toggle').forEach(button => {
             button.addEventListener('click', (event) => {
                 const content = button.nextElementSibling;
                 const icon = button.querySelector('svg');
-                if (content && icon) {
-                    content.classList.toggle('hidden');
-                    icon.classList.toggle('rotate-180');
-                }
+                if (content && icon) { content.classList.toggle('hidden'); icon.classList.toggle('rotate-180'); }
             });
         });
     }
@@ -588,50 +535,36 @@ function populateCatalogTable(kpiList) {
         currentUserId = userId;
         currentUser = appData.users.find(u => u.ID_Usuario == currentUserId) || {};
         isAdmin = currentUser.Rol === 'admin';
-
         const adminNav = document.getElementById('nav-admin');
         if (adminNav) adminNav.style.display = isAdmin ? 'flex' : 'none';
-        
         const profileDiv = document.getElementById('user-profile');
         if(profileDiv && currentUser) {
             profileDiv.innerHTML = `
                 <img class="h-10 w-10 rounded-full object-cover" src="${currentUser.Avatar || `https://placehold.co/100x100/e2e8f0/475569?text=${currentUser.Nombre_Completo ? currentUser.Nombre_Completo.charAt(0) : 'U'}`}" alt="User avatar">
                 <div class="ml-3"><p class="text-sm font-semibold text-gray-800">${currentUser.Nombre_Completo || 'Usuario'}</p><a href="#" id="logout-link" class="text-xs text-gray-500 hover:text-sky-600">Cerrar sesión</a></div>`;
+            document.getElementById('logout-link').addEventListener('click', handleLogout);
         }
     }
 
     function initializeApp() {
-        const navLinks = {
-            'nav-dashboard': renderDashboard,
-            'nav-tactical': renderTacticalView,
-            'nav-personal': renderPersonalView,
-            'nav-assignments': renderMyAssignmentsView,
-            'nav-catalog': renderCatalogView,
-            'nav-admin': renderAdminView,
-        };
+        const navLinks = { 'nav-dashboard': renderDashboard, 'nav-tactical': renderTacticalView, 'nav-personal': renderPersonalView, 'nav-assignments': renderMyAssignmentsView, 'nav-catalog': renderCatalogView, 'nav-admin': renderAdminView };
         const allNavItems = document.querySelectorAll('nav a');
-
         function setActiveNav(id) {
             allNavItems.forEach(link => link.classList.remove('active-nav'));
             document.getElementById(id)?.classList.add('active-nav');
         }
-
         Object.keys(navLinks).forEach(id => {
             const link = document.getElementById(id);
             if(link) {
-                link.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    navLinks[id]();
-                    setActiveNav(id);
-                });
+                link.addEventListener('click', (e) => { e.preventDefault(); navLinks[id](); setActiveNav(id); });
             }
         });
-        
         updateUserContext(currentUserId);
         renderDashboard();
     }
 
     document.addEventListener('DOMContentLoaded', () => {
+        loginForm.addEventListener('submit', handleLogin);
         fetchData();
     });
 </script>
