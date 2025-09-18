@@ -124,519 +124,236 @@
     </div>
 
 <script>
-    // --- ELEMENTOS DEL DOM ---
-    const loginContainer = document.getElementById('login-container');
-    const appContainer = document.getElementById('app-container');
-    const loginForm = document.getElementById('login-form');
-    const loginError = document.getElementById('login-error');
-
-    // --- CONEXIÓN A GOOGLE SHEETS ---
-    const GOOGLE_SHEET_API_URL = 'https://script.google.com/macros/s/AKfycbxQjTjmXv-JYE4Yh77UWtLDPIhXUwXq1zZjaf5S453B7YlHRvqCJVCuWY7-ELpHF4GK/exec'; 
-
-    // --- ESTADO DE LA APLICACIÓN ---
+    // =================================================================================
+    // === CONFIGURACIÓN Y ESTADO DE LA APLICACIÓN ===
+    // =================================================================================
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwPq-oB4-DBTz-J5s-jZ-wX8z-yX-r-J-K-L-j-H-G-r-e-a-t/exec'; // Reemplaza con tu URL de Apps Script
     let appData = {};
-    let currentUserId = null; // El usuario inicia como nulo
-    let currentUser = {};
-    let isAdmin = false;
+    let currentUserId = null;
+    let chartInstances = {};
 
-    // --- LÓGICA DE AUTENTICACIÓN ---
-    async function handleLogin(event) {
-        event.preventDefault();
-        loginError.textContent = '';
-        const email = event.target.email.value;
-        const password = event.target.password.value;
+    const mainContent = document.getElementById('main-content');
+    const loginForm = document.getElementById('login-form');
+    const appContainer = document.getElementById('app-container');
+    const loader = document.getElementById('loader');
 
-        if (!appData.users || appData.users.length === 0) {
-            loginError.textContent = 'Los datos de usuario no se han cargado. Intenta de nuevo.';
-            return;
+    // =================================================================================
+    // === LÓGICA DE DATOS Y UTILIDADES ===
+    // =================================================================================
+    
+    async function fetchData() {
+        try {
+            loader.style.display = 'flex';
+            const response = await fetch(SCRIPT_URL);
+            if (!response.ok) throw new Error(`Error en la red: ${response.statusText}`);
+            const data = await response.json();
+            if (data.error) throw new Error(`Error en el script: ${data.error}`);
+            appData = data;
+            return true;
+        } catch (error) {
+            console.error('Error al cargar los datos:', error);
+            mainContent.innerHTML = `<p class="text-red-500 text-center">Error al cargar los datos. Por favor, recarga la página.</p>`;
+            return false;
+        } finally {
+            loader.style.display = 'none';
         }
+    }
 
-        const user = appData.users.find(u => u.Email && u.Email.toLowerCase() === email.toLowerCase());
+    /**
+     * FUNCIÓN MEJORADA: Da formato a un valor según su unidad ($ o %).
+     */
+    function formatKpiValue(value, unit) {
+        if (value === null || value === undefined || isNaN(value)) {
+            return 'N/A';
+        }
+        if (unit === '$') {
+            return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(value);
+        }
+        if (unit === '%') {
+            // Asumimos que los valores de % ya vienen en su forma decimal (ej. 0.9 para 90%)
+            return `${(value * 100).toFixed(1)}%`;
+        }
+        // Para números sin unidad específica
+        return new Intl.NumberFormat('es-MX').format(value);
+    }
 
-        // ADVERTENCIA: Esta es una validación insegura, solo para prototipos.
-        if (user && user.Contraseña === password) {
-            // ¡Éxito!
+    // =================================================================================
+    // === LÓGICA DE AUTENTICACIÓN Y CONTEXTO DE USUARIO ===
+    // =================================================================================
+
+    function handleLogin(event) {
+        event.preventDefault();
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const user = appData.users.find(u => u.Email === email && u.Contraseña == password);
+        if (user) {
             currentUserId = user.ID_Usuario;
-            loginContainer.style.display = 'none';
+            sessionStorage.setItem('currentUserId', currentUserId);
             appContainer.style.display = 'flex';
+            loginForm.parentElement.style.display = 'none';
             initializeApp();
         } else {
-            // Fallo
-            loginError.textContent = 'Correo o contraseña incorrectos.';
+            alert('Correo o contraseña incorrectos.');
         }
     }
 
     function handleLogout() {
-        // La forma más sencilla de cerrar sesión es recargar la página
-        location.reload();
-    }
-
-    // --- MANEJO DE DATOS ---
-    async function fetchData() {
-        try {
-            const response = await fetch(GOOGLE_SHEET_API_URL);
-            if (!response.ok) throw new Error('Respuesta de red no fue exitosa.');
-            
-            const rawData = await response.json();
-            console.log("Datos recibidos de Google Sheet:", rawData);
-            appData = processRawData(rawData);
-            
-            // Ya no iniciamos la app aquí, solo dejamos los datos listos.
-
-        } catch (error) {
-            loginError.textContent = `Error de conexión: ${error.message}`;
-        }
-    }
-    
-    function processRawData(data) {
-        // (Esta función permanece igual que antes)
-        const expectedKeys = ['users', 'objectives', 'keyResults', 'processes', 'kpis', 'results'];
-        const cleanData = {};
-        expectedKeys.forEach(key => {
-            if (data[key] && Array.isArray(data[key])) {
-                cleanData[key] = data[key].filter(row => row && Object.values(row).some(val => val !== null && val !== ''));
-            } else { cleanData[key] = []; }
-        });
-        cleanData.kpis = cleanData.kpis.map(kpi => ({ ...kpi, Meta: parseFloat(kpi.Meta) || 0, Es_Financiero: String(kpi.Es_Financiero).toLowerCase() === 'verdadero' }));
-        cleanData.results = cleanData.results.map(res => ({ ...res, Valor: parseFloat(res.Valor) || 0 }));
-        return cleanData;
-    }
-
-    // --- RENDER FUNCTIONS (Las funciones de renderizado como renderDashboard, renderTacticalView, etc., permanecen aquí sin cambios) ---
-    
-    // (Pega aquí TODAS tus funciones de renderizado: renderDashboard, renderTacticalView, renderPersonalView, renderMyAssignmentsView, renderCatalogView, renderAdminView y sus funciones auxiliares como populateCatalogTable y renderPersonalCharts)
-    function renderDashboard() {
-        const content = document.getElementById('main-content');
-        document.getElementById('view-title').textContent = 'Dashboard General';
-        if (!appData.objectives.length) {
-            content.innerHTML = `<div class="text-center p-10 bg-white rounded-lg border"><p class="text-gray-500">No se encontraron objetivos para mostrar.</p></div>`;
-            return;
-        }
-
-        let html = '<div class="space-y-4">'; 
-        appData.objectives.forEach(obj => {
-            const keyResults = appData.keyResults.filter(kr => kr.ID_Objetivo_Asociado === obj.ID_Objetivo);
-            let totalProgress = 0;
-            let krCount = 0;
-
-            keyResults.forEach(kr => {
-                const kpis = appData.kpis.filter(kpi => kpi.ID_Resultado_Clave === kr.ID_Resultado_Clave);
-                if (kpis.length > 0) {
-                    const krProgress = kpis.reduce((acc, kpi) => {
-                        const results = appData.results.filter(r => r.ID_KPI === kpi.ID_KPI);
-                        const lastResult = results.length > 0 ? results.sort((a,b) => new Date(b.Fecha) - new Date(a.Fecha))[0].Valor : 0;
-                        return acc + (kpi.Meta > 0 ? (lastResult / kpi.Meta) : 0);
-                    }, 0) / kpis.length;
-                    totalProgress += krProgress;
-                    krCount++;
-                }
-            });
-
-            const avgProgress = krCount > 0 ? Math.min((totalProgress / krCount) * 100, 100) : 0;
-            
-            html += `
-                <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
-                    <button class="w-full text-left p-5 hover:bg-gray-50 accordion-toggle">
-                        <div class="flex justify-between items-center">
-                            <h3 class="text-lg font-semibold text-gray-800">${obj.Nombre_Objetivo}</h3>
-                            <div class="flex items-center gap-4">
-                                <div class="w-40">
-                                    <div class="flex justify-between items-center mb-1"><span class="text-xs font-medium text-sky-700">Progreso</span><span class="text-xs font-bold text-sky-700">${avgProgress.toFixed(1)}%</span></div>
-                                    <div class="w-full bg-gray-200 rounded-full h-2"><div class="bg-sky-500 h-2 rounded-full" style="width: ${avgProgress.toFixed(1)}%"></div></div>
-                                </div>
-                                <svg class="w-5 h-5 text-gray-500 transition-transform transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                            </div>
-                        </div>
-                    </button>
-                    <div class="accordion-content hidden p-6 pt-0 border-t border-gray-200">
-                        <p class="mt-4 mb-2 text-sm font-semibold text-gray-600">Resultados Clave:</p>
-                        <div class="space-y-5">`;
-
-            keyResults.forEach(kr => {
-                const kpis = appData.kpis.filter(kpi => kpi.ID_Resultado_Clave === kr.ID_Resultado_Clave); 
-                 let current = 0, target = 0;
-                 let isFinancial = false;
-                 let unit = '';
-
-                 kpis.forEach(kpi => {
-                     const results = appData.results.filter(r => r.ID_KPI === kpi.ID_KPI);
-                     current += results.length > 0 ? results.sort((a,b) => new Date(b.Fecha) - new Date(a.Fecha))[0].Valor : 0;
-                     target += kpi.Meta;
-                     if(kpi.Es_Financiero) isFinancial = true;
-                     unit = kpi.Unidad;
-                 });
-
-                const progress = target > 0 ? Math.min((current / target) * 100, 100) : 0;
-                let metaDetails;
-                
-                if (isFinancial && !isAdmin) {
-                    metaDetails = `Progreso: <span class="font-semibold">${progress.toFixed(1)}%</span>`;
-                } else if (unit === '%') {
-                    metaDetails = `Meta: ${(target*100).toFixed(1)}% | Actual: ${(current*100).toFixed(1)}%`;
-                }
-                else {
-                    const formatOptions = unit === '$' ? { style: 'currency', currency: 'MXN', minimumFractionDigits: 0 } : {};
-                    metaDetails = `Meta: ${target.toLocaleString('es-MX', formatOptions)} | Actual: ${current.toLocaleString('es-MX', formatOptions)}`;
-                }
-
-                html += `
-                    <div>
-                        <div class="flex justify-between items-center mb-1"><p class="font-medium text-gray-700">${kr.Nombre_Resultado_Clave}</p><p class="text-sm text-gray-500">${metaDetails}</p></div>
-                        <div class="w-full bg-gray-200 rounded-full h-2"><div class="bg-teal-500 h-2 rounded-full" style="width: ${progress.toFixed(1)}%"></div></div>
-                    </div>`;
-            });
-            
-            html += `</div></div></div>`;
-        });
-
-        html += '</div>';
-        content.innerHTML = html;
-        addAccordionListeners();
-    }
-    
-    function renderTacticalView() {
-        const content = document.getElementById('main-content');
-        document.getElementById('view-title').textContent = 'Vista Táctica (Por Proceso)';
-        if (!appData.processes.length) {
-            content.innerHTML = `<div class="text-center p-10 bg-white rounded-lg border"><p class="text-gray-500">No hay procesos para mostrar.</p></div>`;
-            return;
-        }
-
-        let html = '<div class="space-y-4">';
-        appData.processes.forEach(process => {
-            html += `
-                <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
-                    <button class="w-full text-left p-5 flex justify-between items-center hover:bg-gray-50 accordion-toggle">
-                        <div>
-                            <h3 class="text-lg font-semibold text-gray-800">${process.Nombre_Proceso}</h3>
-                            <p class="text-sm text-gray-500 mt-1">Dueño: ${process.Dueño_Proceso}</p>
-                        </div>
-                        <svg class="w-5 h-5 text-gray-500 transition-transform transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                    </button>
-                    <div class="accordion-content hidden p-6 pt-0 border-t border-gray-200">
-                        <div class="mt-4 space-y-4">`;
-
-            const processKpis = appData.kpis.filter(kpi => kpi.ID_Proceso_Asc && process.ID_Proceso && kpi.ID_Proceso_Asc.trim() === process.ID_Proceso.trim());
-            if(processKpis.length > 0) {
-                processKpis.forEach(kpi => {
-                    const results = appData.results.filter(r => r.ID_KPI === kpi.ID_KPI);
-                    const current = results.length > 0 ? results.sort((a,b) => new Date(b.Fecha) - new Date(a.Fecha))[0].Valor : 0;
-                    const target = kpi.Meta;
-                    const progress = target > 0 ? Math.min((current / target) * 100, 100) : 0;
-                    
-            let metaDetails;
-            if (kpi.Es_Financiero && !isAdmin) {
-                metaDetails = `${progress.toFixed(1)}%`;
-            } else if (kpi.Unidad === '%') {
-                metaDetails = `${(current * 100).toFixed(1)}% / ${(target * 100).toFixed(1)}%`;
-            } else {
-                const formatOptions = kpi.Unidad === '$' ? { style: 'currency', currency: 'MXN', minimumFractionDigits: 0 } : {};
-                metaDetails = `${current.toLocaleString('es-MX', formatOptions)} / ${target.toLocaleString('es-MX', formatOptions)}`;
-            }
-
-                    html += `
-                        <div>
-                            <div class="flex justify-between items-center text-sm mb-1"><span class="font-medium text-gray-700">${kpi.Nombre_KPI}</span><span class="font-semibold text-gray-600">${metaDetails}</span></div>
-                            <div class="w-full bg-gray-200 rounded-full h-2"><div class="bg-cyan-500 h-2 rounded-full" style="width: ${progress}%"></div></div>
-                        </div>`;
-                });
-            } else {
-                 html += `<p class="text-sm text-gray-500">No hay KPIs asociados a este proceso.</p>`;
-            }
-
-            html += `</div></div></div>`;
-        });
-        html += '</div>';
-        content.innerHTML = html;
-        addAccordionListeners();
-    }
-    
-    function renderPersonalView() {
-        const content = document.getElementById('main-content');
-        document.getElementById('view-title').textContent = 'Mi Tablero Personal';
-        const userKpis = appData.kpis.filter(kpi => kpi.ID_Usuario_Res == currentUserId);
-
-        if (userKpis.length === 0) {
-            content.innerHTML = `<div class="text-center p-10 bg-white rounded-lg border"><p class="text-gray-500">Aún no tienes KPIs asignados.</p></div>`;
-            return;
-        }
-
-        let totalProgressSum = 0;
-        let kpisWithTarget = 0;
-        const involvedProcesses = new Set();
-
-        userKpis.forEach(kpi => {
-            const results = appData.results.filter(r => r.ID_KPI === kpi.ID_KPI);
-            const current = results.length > 0 ? results.sort((a,b) => new Date(b.Fecha) - new Date(a.Fecha))[0].Valor : 0;
-            if (kpi.Meta > 0) {
-                totalProgressSum += Math.min((current / kpi.Meta), 1); 
-                kpisWithTarget++;
-            }
-            const process = appData.processes.find(p => p.ID_Proceso === kpi.ID_Proceso_Asc);
-            if (process) involvedProcesses.add(process.Nombre_Proceso);
-        });
-
-        const averageProgress = kpisWithTarget > 0 ? (totalProgressSum / kpisWithTarget) * 100 : 0;
-        const userFirstName = currentUser.Nombre_Completo ? currentUser.Nombre_Completo.split(' ')[0] : 'Usuario';
-
-        let html = `
-            <div class="space-y-8">
-                <div>
-                    <h2 class="text-2xl font-bold text-gray-800">Hola, ${userFirstName} 👋</h2>
-                    <p class="mt-1 text-gray-600">Este es tu resumen de desempeño personal.</p>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="bg-white p-6 rounded-xl border border-gray-200 flex items-center gap-5">
-                        <div class="bg-sky-100 text-sky-600 p-3 rounded-full"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg></div>
-                        <div><p class="text-sm text-gray-500">KPIs Asignados</p><p class="text-2xl font-bold text-gray-800">${userKpis.length}</p></div>
-                    </div>
-                    <div class="bg-white p-6 rounded-xl border border-gray-200 flex items-center gap-5">
-                        <div class="bg-teal-100 text-teal-600 p-3 rounded-full"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg></div>
-                        <div><p class="text-sm text-gray-500">Progreso Promedio</p><p class="text-2xl font-bold text-gray-800">${averageProgress.toFixed(1)}%</p></div>
-                    </div>
-                    <div class="bg-white p-6 rounded-xl border border-gray-200 flex items-center gap-5">
-                        <div class="bg-indigo-100 text-indigo-600 p-3 rounded-full"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 8v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg></div>
-                        <div><p class="text-sm text-gray-500">Procesos Involucrados</p><p class="text-2xl font-bold text-gray-800">${involvedProcesses.size}</p></div>
-                    </div>
-                </div>
-
-                <div>
-                    <h3 class="text-xl font-bold text-gray-800 mb-4">Detalle de mis KPIs</h3>
-                    <div class="space-y-4">`;
-
-        userKpis.forEach(kpi => {
-            const results = appData.results.filter(r => r.ID_KPI === kpi.ID_KPI).sort((a,b) => new Date(a.Fecha) - new Date(b.Fecha));
-            const current = results.length > 0 ? results[results.length - 1].Valor : 0;
-            const target = kpi.Meta;
-            const progress = target > 0 ? Math.min((current / target) * 100, 100) : 0;
-            const processName = appData.processes.find(p => p.ID_Proceso === kpi.ID_Proceso_Asc)?.Nombre_Proceso || 'N/A';
-            let metaDisplay;
-            if (kpi.Unidad === '%') {
-                metaDisplay = `${(current * 100).toFixed(1)}% / ${(target * 100).toFixed(1)}%`;
-            } else {
-                const formatOptions = kpi.Unidad === '$' ? { style: 'currency', currency: 'MXN', minimumFractionDigits: 0 } : {};
-                metaDisplay = `${current.toLocaleString('es-MX', formatOptions)} / ${target.toLocaleString('es-MX', formatOptions)}`;
-            }
-
-            html += `
-                <div class="bg-white p-5 rounded-xl border border-gray-200 grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
-                    <div class="md:col-span-1"><p class="font-semibold text-gray-800">${kpi.Nombre_KPI}</p><p class="text-sm text-gray-500">${processName}</p></div>
-                    <div class="md:col-span-1">
-                        <div class="flex justify-between items-center text-sm mb-1"><span class="text-gray-600">Progreso</span><span class="font-semibold ${progress >= 80 ? 'text-green-600' : 'text-amber-600'}">${progress.toFixed(1)}%</span></div>
-                        <div class="w-full bg-gray-200 rounded-full h-2"><div class="bg-gradient-to-r ${progress >= 80 ? 'from-green-400 to-green-500' : 'from-amber-400 to-amber-500'} h-2 rounded-full" style="width: ${progress}%"></div></div>
-                        <p class="text-xs text-right text-gray-500 mt-1">${metaDisplay}</p>
-                    </div>
-                    <div class="md:col-span-1 h-20"><canvas id="chart-kpi-${kpi.ID_KPI}"></canvas></div>
-                </div>`;
-        });
-        html += `</div></div></div>`;
-        content.innerHTML = html;
-        renderPersonalCharts(userKpis);
-    }
-    
-    function renderPersonalCharts(userKpis) {
-        userKpis.forEach(kpi => {
-            const chartCanvas = document.getElementById(`chart-kpi-${kpi.ID_KPI}`);
-            if (chartCanvas) {
-                const historicalResults = appData.results.filter(r => r.ID_KPI === kpi.ID_KPI).sort((a,b) => new Date(a.Fecha) - new Date(b.Fecha));
-                const labels = historicalResults.map(r => new Date(r.Fecha).toLocaleDateString('es-MX', { month: 'short', day: 'numeric' }));
-                const dataPoints = historicalResults.map(r => r.Valor);
-                new Chart(chartCanvas, {type: 'line',data: {labels: labels,datasets: [{label: 'Valor',data: dataPoints,borderColor: '#0ea5e9',backgroundColor: 'rgba(14, 165, 233, 0.1)',borderWidth: 2,pointRadius: 2,pointBackgroundColor: '#0284c7',tension: 0.3,fill: true,}]},options: {responsive: true,maintainAspectRatio: false,plugins: { legend: { display: false }, tooltip: { enabled: true } },scales: {x: { display: false },y: { display: false }}}});
-            }
-        });
-    }
-
-    function renderMyAssignmentsView() {
-        const content = document.getElementById('main-content');
-        document.getElementById('view-title').textContent = 'Mis Asignaciones';
-        const assignedKpis = appData.kpis.filter(kpi => kpi.ID_Usuario_Res == currentUserId);
-
-        if (assignedKpis.length === 0) {
-            content.innerHTML = `<div class="text-center p-10 bg-white rounded-lg border"><p class="text-gray-500">No tienes KPIs asignados.</p></div>`;
-            return;
-        }
-
-        let html = `<div class="bg-white rounded-xl border border-gray-200 shadow-sm"><div class="overflow-x-auto"><table class="w-full text-sm text-left text-gray-500"><thead class="text-xs text-gray-700 uppercase bg-gray-50"><tr><th scope="col" class="px-6 py-3">Nombre del KPI</th><th scope="col" class="px-6 py-3">Frecuencia</th><th scope="col" class="px-6 py-3">Meta</th></tr></thead><tbody>`;
-        assignedKpis.forEach(kpi => {
-            let metaDisplay;
-            if (kpi.Es_Financiero && !isAdmin) { metaDisplay = `Objetivo de Progreso`;} 
-            else if (kpi.Unidad === '%') { metaDisplay = `${(kpi.Meta * 100).toFixed(1)}%`;} 
-            else { const formatOptions = kpi.Unidad === '$' ? { style: 'currency', currency: 'MXN', minimumFractionDigits: 0 } : {}; metaDisplay = `${kpi.Meta.toLocaleString('es-MX', formatOptions)} ${kpi.Unidad === '$' ? '' : kpi.Unidad}`; }
-            html += `<tr class="bg-white border-b hover:bg-gray-50"><th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">${kpi.Nombre_KPI}</th><td class="px-6 py-4">${kpi.Frecuencia}</td><td class="px-6 py-4">${metaDisplay}</td></tr>`;
-        });
-        html += `</tbody></table></div></div>`;
-        content.innerHTML = html;
-    }
-
-    function renderCatalogView() {
-        const content = document.getElementById('main-content');
-        document.getElementById('view-title').textContent = 'Catálogo de KPIs';
-        let html = `
-            <div class="space-y-6">
-                <div><h2 class="text-2xl font-bold text-gray-800">Catálogo de Indicadores</h2><p class="mt-1 text-gray-600">Busca y explora todos los KPIs definidos en la organización.</p></div>
-                <div><input type="text" id="kpi-search" placeholder="🔎 Buscar por nombre, proceso, responsable..." class="w-full md:w-1/2 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition"></div>
-                <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden"><div class="overflow-x-auto">
-                    <table class="w-full text-sm text-left text-gray-500"><thead class="text-xs text-gray-700 uppercase bg-gray-50"><tr>
-                        <th scope="col" class="px-6 py-3">Nombre del KPI</th><th scope="col" class="px-6 py-3">Resultado Clave Asociado</th><th scope="col" class="px-6 py-3">Proceso</th><th scope="col" class="px-6 py-3">Responsable</th><th scope="col" class="px-6 py-3">Frecuencia</th>
-                    </tr></thead><tbody id="kpi-catalog-body"></tbody></table>
-                </div></div>
-            </div>`;
-        content.innerHTML = html;
-        populateCatalogTable(appData.kpis);
-        const searchInput = document.getElementById('kpi-search');
-        searchInput.addEventListener('keyup', (event) => {
-            const searchTerm = event.target.value.toLowerCase();
-            const filteredKpis = appData.kpis.filter(kpi => {
-                const kr = appData.keyResults.find(kr => kr.ID_Resultado_Clave === kpi.ID_Resultado_Clave);
-                const process = appData.processes.find(p => p.ID_Proceso === kpi.ID_Proceso_Asc);
-                const user = appData.users.find(u => u.ID_Usuario == kpi.ID_Usuario_Res);
-                return kpi.Nombre_KPI.toLowerCase().includes(searchTerm) ||
-                       (kr && kr.Nombre_Resultado_Clave.toLowerCase().includes(searchTerm)) ||
-                       (process && process.Nombre_Proceso.toLowerCase().includes(searchTerm)) ||
-                       (user && user.Nombre_Completo.toLowerCase().includes(searchTerm));
-            });
-            populateCatalogTable(filteredKpis);
-        });
-    }
-    
-    function populateCatalogTable(kpiList) {
-        const tableBody = document.getElementById('kpi-catalog-body');
-        if (!tableBody) return;
-        if (kpiList.length === 0) { tableBody.innerHTML = `<tr><td colspan="5" class="text-center p-6 text-gray-500">No se encontraron KPIs.</td></tr>`; return; }
-        let tableHtml = '';
-        kpiList.forEach(kpi => {
-            const krName = appData.keyResults.find(kr => kr.ID_Resultado_Clave === kpi.ID_Resultado_Clave)?.Nombre_Resultado_Clave || '<em class="text-gray-400">N/A</em>';
-            const processName = appData.processes.find(p => p.ID_Proceso === kpi.ID_Proceso_Asc)?.Nombre_Proceso || '<em class="text-gray-400">N/A</em>';
-            const userName = appData.users.find(u => u.ID_Usuario == kpi.ID_Usuario_Res)?.Nombre_Completo || '<em class="text-gray-400">N/A</em>';
-            tableHtml += `<tr class="bg-white border-b hover:bg-gray-50"><th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">${kpi.Nombre_KPI}</th><td class="px-6 py-4">${krName}</td><td class="px-6 py-4">${processName}</td><td class="px-6 py-4">${userName}</td><td class="px-6 py-4">${kpi.Frecuencia}</td></tr>`;
-        });
-        tableBody.innerHTML = tableHtml;
-    }
-    
-// --- NUEVA FUNCIÓN COMPLETA PARA "ADMINISTRACIÓN" ---
-
-function renderAdminView() {
-    const content = document.getElementById('main-content');
-    document.getElementById('view-title').textContent = 'Panel de Administración';
-
-    // --- Cálculos para las tarjetas de resumen ---
-    const totalUsers = appData.users.length;
-    const adminCount = appData.users.filter(u => u.Rol === 'admin').length;
-    const totalKpis = appData.kpis.length;
-
-    // --- Construcción del HTML ---
-    let html = `
-        <div class="space-y-8">
-            <div>
-                <h2 class="text-2xl font-bold text-gray-800">Panel de Administración</h2>
-                <p class="mt-1 text-gray-600">Vista general del sistema y gestión de usuarios.</p>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="bg-white p-6 rounded-xl border border-gray-200 flex items-center gap-5">
-                    <div class="bg-blue-100 text-blue-600 p-3 rounded-full"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.653-.125-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.653.125-1.283.356-1.857m0 0a3.001 3.001 0 015.644 0M12 12a3 3 0 100-6 3 3 0 000 6z"></path></svg></div>
-                    <div><p class="text-sm text-gray-500">Total de Usuarios</p><p class="text-2xl font-bold text-gray-800">${totalUsers}</p></div>
-                </div>
-                <div class="bg-white p-6 rounded-xl border border-gray-200 flex items-center gap-5">
-                    <div class="bg-red-100 text-red-600 p-3 rounded-full"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg></div>
-                    <div><p class="text-sm text-gray-500">Administradores</p><p class="text-2xl font-bold text-gray-800">${adminCount}</p></div>
-                </div>
-                <div class="bg-white p-6 rounded-xl border border-gray-200 flex items-center gap-5">
-                    <div class="bg-green-100 text-green-600 p-3 rounded-full"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg></div>
-                    <div><p class="text-sm text-gray-500">KPIs Totales Definidos</p><p class="text-2xl font-bold text-gray-800">${totalKpis}</p></div>
-                </div>
-            </div>
-
-            <div>
-                <h3 class="text-xl font-bold text-gray-800 mb-4">Gestión de Usuarios</h3>
-                <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-sm text-left text-gray-500">
-                            <thead class="text-xs text-gray-700 uppercase bg-gray-50">
-                                <tr>
-                                    <th scope="col" class="px-6 py-3">Nombre Completo</th>
-                                    <th scope="col" class="px-6 py-3">Rol</th>
-                                    <th scope="col" class="px-6 py-3">Email</th>
-                                    <th scope="col" class="px-6 py-3">KPIs Asignados</th>
-                                </tr>
-                            </thead>
-                            <tbody>`;
-
-    appData.users.forEach(user => {
-        const assignedKpisCount = appData.kpis.filter(kpi => kpi.ID_Usuario_Res == user.ID_Usuario).length;
-        const roleBadge = user.Rol === 'admin' 
-            ? '<span class="bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded-full">Admin</span>' 
-            : '<span class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full">User</span>';
-
-        html += `
-            <tr class="bg-white border-b hover:bg-gray-50">
-                <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">${user.Nombre_Completo}</th>
-                <td class="px-6 py-4">${roleBadge}</td>
-                <td class="px-6 py-4">${user.Email || 'N/A'}</td>
-                <td class="px-6 py-4 text-center">${assignedKpisCount}</td>
-            </tr>`;
-    });
-
-    html += `
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>`;
-
-    content.innerHTML = html;
-}
-
-    // --- INICIALIZACIÓN Y HELPERS ---
-    function addAccordionListeners() {
-        document.querySelectorAll('.accordion-toggle').forEach(button => {
-            button.addEventListener('click', (event) => {
-                const content = button.nextElementSibling;
-                const icon = button.querySelector('svg');
-                if (content && icon) { content.classList.toggle('hidden'); icon.classList.toggle('rotate-180'); }
-            });
-        });
+        currentUserId = null;
+        sessionStorage.removeItem('currentUserId');
+        appContainer.style.display = 'none';
+        loginForm.parentElement.style.display = 'flex';
     }
 
     function updateUserContext(userId) {
-        currentUserId = userId;
-        currentUser = appData.users.find(u => u.ID_Usuario == currentUserId) || {};
-        isAdmin = currentUser.Rol === 'admin';
-        const adminNav = document.getElementById('nav-admin');
-        if (adminNav) adminNav.style.display = isAdmin ? 'flex' : 'none';
-        const profileDiv = document.getElementById('user-profile');
-        if(profileDiv && currentUser) {
-            profileDiv.innerHTML = `
-                <img class="h-10 w-10 rounded-full object-cover" src="${currentUser.Avatar || `https://placehold.co/100x100/e2e8f0/475569?text=${currentUser.Nombre_Completo ? currentUser.Nombre_Completo.charAt(0) : 'U'}`}" alt="User avatar">
-                <div class="ml-3"><p class="text-sm font-semibold text-gray-800">${currentUser.Nombre_Completo || 'Usuario'}</p><a href="#" id="logout-link" class="text-xs text-gray-500 hover:text-sky-600">Cerrar sesión</a></div>`;
+        const currentUser = appData.users.find(u => u.ID_Usuario == userId);
+        const userAvatar = document.getElementById('user-avatar');
+        if (currentUser && userAvatar) {
+            userAvatar.innerHTML = `
+                <img class="w-10 h-10 rounded-full" src="https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.Nombre_Completo)}&background=random" alt="User avatar">
+                <div class="ml-3">
+                    <p class="text-sm font-semibold text-gray-800">${currentUser.Nombre_Completo}</p>
+                    <a href="#" id="logout-link" class="text-xs text-gray-500 hover:text-sky-600">Cerrar sesión</a>
+                </div>`;
             document.getElementById('logout-link').addEventListener('click', handleLogout);
         }
     }
+    
+    // =================================================================================
+    // === LÓGICA DE RENDERIZADO DE VISTAS ===
+    // =================================================================================
+
+    /**
+     * FUNCIÓN MEJORADA: Crea la tarjeta para un KPI individual.
+     * Ahora calcula y formatea correctamente según la nueva columna 'Metodo_Agregacion'.
+     */
+    function createKpiCard(kpi) {
+        const resultsForKpi = appData.results.filter(r => r.ID_KPI === kpi.ID_KPI);
+        if (!resultsForKpi.length) return ''; // No mostrar tarjeta si no hay resultados
+
+        const groupedByMonth = resultsForKpi.reduce((acc, r) => {
+            const month = new Date(r.Fecha).getMonth();
+            if (!acc[month]) acc[month] = [];
+            acc[month].push(r.Valor);
+            return acc;
+        }, {});
+
+        const currentMonth = new Date().getMonth();
+        const monthlyValues = groupedByMonth[currentMonth] || [];
+        
+        // --- INICIO DE LA LÓGICA MEJORADA ---
+        let currentValue;
+        const aggregationMethod = kpi.Metodo_Agregacion; // Leemos el nuevo campo
+
+        if (monthlyValues.length > 0) {
+            if (aggregationMethod === 'SUMAR') {
+                // Suma los valores para KPIs como Facturación
+                currentValue = monthlyValues.reduce((sum, value) => sum + value, 0);
+            } else {
+                // Promedia los valores para KPIs como Nivel de Servicio
+                currentValue = monthlyValues.reduce((sum, value) => sum + value, 0) / monthlyValues.length;
+            }
+        } else {
+            currentValue = 0;
+        }
+        
+        const progress = kpi.Meta ? (currentValue / kpi.Meta) : 0;
+        const progressBarColor = progress >= 0.8 ? 'bg-green-500' : progress >= 0.5 ? 'bg-yellow-500' : 'bg-red-500';
+        // --- FIN DE LA LÓGICA MEJORADA ---
+
+        return `
+            <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+                <div class="flex items-center justify-between">
+                    <span class="text-sm font-medium text-gray-500">${kpi.Nombre_KPI}</span>
+                    <span class="text-xs bg-sky-100 text-sky-800 px-2 py-1 rounded-full">${kpi.Frecuencia}</span>
+                </div>
+                <div class="mt-2">
+                    <p class="text-3xl font-bold text-gray-800">${formatKpiValue(currentValue, kpi.Unidad)}</p>
+                    <p class="text-sm text-gray-500">Meta: ${formatKpiValue(kpi.Meta, kpi.Unidad)}</p>
+                </div>
+                <div class="mt-4">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-sm font-medium text-gray-700">Progreso</span>
+                        <span class="text-sm font-medium text-gray-700">${(progress * 100).toFixed(1)}%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                        <div class="${progressBarColor} h-2.5 rounded-full" style="width: ${Math.min(progress * 100, 100)}%"></div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderDashboard() {
+        const strategicKpis = appData.kpis.filter(kpi => 
+            appData.keyResults.some(kr => kr.ID_Resultado_Clave === kpi.ID_Resultado_Clave && 
+                appData.objectives.some(obj => obj.ID_Objetivo === kr.ID_Objetivo_Asociado)
+            )
+        );
+        mainContent.innerHTML = `
+            <h1 class="text-2xl font-bold text-gray-800 mb-6">Dashboard Estratégico</h1>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                ${strategicKpis.map(createKpiCard).join('')}
+            </div>
+        `;
+    }
+
+    // (Aquí irían las demás funciones de renderizado: renderTacticalView, renderPersonalView, etc. que puedes desarrollar en el futuro)
+    function renderTacticalView() { mainContent.innerHTML = '<h1 class="text-2xl font-bold text-gray-800">Vista Táctica (En construcción)</h1>'; }
+    function renderPersonalView() { mainContent.innerHTML = '<h1 class="text-2xl font-bold text-gray-800">Mi Desempeño (En construcción)</h1>'; }
+    function renderMyAssignmentsView() { mainContent.innerHTML = '<h1 class="text-2xl font-bold text-gray-800">Mis Asignaciones (En construcción)</h1>'; }
+    function renderCatalogView() { mainContent.innerHTML = '<h1 class="text-2xl font-bold text-gray-800">Catálogo (En construcción)</h1>'; }
+    function renderAdminView() { mainContent.innerHTML = '<h1 class="text-2xl font-bold text-gray-800">Administración (En construcción)</h1>'; }
+
+    // =================================================================================
+    // === INICIALIZACIÓN DE LA APLICACIÓN ===
+    // =================================================================================
 
     function initializeApp() {
-        const navLinks = { 'nav-dashboard': renderDashboard, 'nav-tactical': renderTacticalView, 'nav-personal': renderPersonalView, 'nav-assignments': renderMyAssignmentsView, 'nav-catalog': renderCatalogView, 'nav-admin': renderAdminView };
+        const navLinks = { 
+            'nav-dashboard': renderDashboard, 
+            'nav-tactical': renderTacticalView, 
+            'nav-personal': renderPersonalView, 
+            'nav-assignments': renderMyAssignmentsView, 
+            'nav-catalog': renderCatalogView, 
+            'nav-admin': renderAdminView 
+        };
         const allNavItems = document.querySelectorAll('nav a');
+        
         function setActiveNav(id) {
             allNavItems.forEach(link => link.classList.remove('active-nav'));
             document.getElementById(id)?.classList.add('active-nav');
         }
+
         Object.keys(navLinks).forEach(id => {
             const link = document.getElementById(id);
             if(link) {
-                link.addEventListener('click', (e) => { e.preventDefault(); navLinks[id](); setActiveNav(id); });
+                link.addEventListener('click', (e) => { 
+                    e.preventDefault(); 
+                    navLinks[id](); 
+                    setActiveNav(id); 
+                });
             }
         });
         updateUserContext(currentUserId);
-        renderDashboard();
+        renderDashboard(); 
+        setActiveNav('nav-dashboard');
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
-        loginForm.addEventListener('submit', handleLogin);
-        fetchData();
+    document.addEventListener('DOMContentLoaded', async () => {
+        const success = await fetchData();
+        if (success) {
+            loginForm.addEventListener('submit', handleLogin);
+            const storedUserId = sessionStorage.getItem('currentUserId');
+            if (storedUserId) {
+                currentUserId = storedUserId;
+                appContainer.style.display = 'flex';
+                loginForm.parentElement.style.display = 'none';
+                initializeApp();
+            }
+        }
     });
 </script>
+
 </body>
 </html>
 
