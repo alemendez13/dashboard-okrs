@@ -127,7 +127,7 @@
     // =================================================================================
     // === CONFIGURACIÓN Y ESTADO DE LA APLICACIÓN ===
     // =================================================================================
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxQjTjmXv-JYE4Yh77UWtLDPIhXUwXq1zZjaf5S453B7YlHRvqCJVCuWY7-ELpHF4GK/exec'; // Reemplaza con tu URL de Apps Script
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxQjTjmXv-JYE4Yh77UWtLDPIhXUwXq1zZjaf5S453B7YlHRvqCJVCuWY7-ELpHF4GK/exec';
     let appData = {};
     let currentUserId = null;
     let chartInstances = {};
@@ -141,14 +141,47 @@
     // === LÓGICA DE DATOS Y UTILIDADES ===
     // =================================================================================
     
+    /**
+     * AJUSTE CLAVE: Se restaura la función para procesar y limpiar los datos.
+     */
+    function processRawData(data) {
+        const expectedKeys = ['users', 'objectives', 'keyResults', 'processes', 'kpis', 'results'];
+        const cleanData = {};
+        expectedKeys.forEach(key => {
+            if (data[key] && Array.isArray(data[key])) {
+                // Filtra filas completamente vacías
+                cleanData[key] = data[key].filter(row => row && Object.values(row).some(val => val !== null && val !== ''));
+            } else { 
+                cleanData[key] = []; 
+            }
+        });
+        
+        // Convierte campos importantes a números para poder hacer cálculos
+        if (cleanData.kpis) {
+            cleanData.kpis = cleanData.kpis.map(kpi => ({ 
+                ...kpi, 
+                Meta: parseFloat(kpi.Meta) || 0,
+                // Asegura que Metodo_Agregacion exista
+                Metodo_Agregacion: kpi.Metodo_Agregacion || 'PROMEDIAR' 
+            }));
+        }
+        if (cleanData.results) {
+            cleanData.results = cleanData.results.map(res => ({ ...res, Valor: parseFloat(res.Valor) || 0 }));
+        }
+        return cleanData;
+    }
+
     async function fetchData() {
         try {
             loader.style.display = 'flex';
             const response = await fetch(SCRIPT_URL);
             if (!response.ok) throw new Error(`Error en la red: ${response.statusText}`);
-            const data = await response.json();
-            if (data.error) throw new Error(`Error en el script: ${data.error}`);
-            appData = data;
+            const rawData = await response.json();
+            if (rawData.error) throw new Error(`Error en el script: ${rawData.error}`);
+            
+            // AJUSTE CLAVE: Usamos la función de procesamiento aquí
+            appData = processRawData(rawData);
+            
             return true;
         } catch (error) {
             console.error('Error al cargar los datos:', error);
@@ -159,21 +192,10 @@
         }
     }
 
-    /**
-     * FUNCIÓN MEJORADA: Da formato a un valor según su unidad ($ o %).
-     */
     function formatKpiValue(value, unit) {
-        if (value === null || value === undefined || isNaN(value)) {
-            return 'N/A';
-        }
-        if (unit === '$') {
-            return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(value);
-        }
-        if (unit === '%') {
-            // Asumimos que los valores de % ya vienen en su forma decimal (ej. 0.9 para 90%)
-            return `${(value * 100).toFixed(1)}%`;
-        }
-        // Para números sin unidad específica
+        if (value === null || value === undefined || isNaN(value)) return 'N/A';
+        if (unit === '$') return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(value);
+        if (unit === '%') return `${(value * 100).toFixed(1)}%`;
         return new Intl.NumberFormat('es-MX').format(value);
     }
 
@@ -200,15 +222,18 @@
     function handleLogout() {
         currentUserId = null;
         sessionStorage.removeItem('currentUserId');
-        appContainer.style.display = 'none';
-        loginForm.parentElement.style.display = 'flex';
+        location.reload(); // La forma más simple de reiniciar el estado
     }
+    
+    // (El resto del código desde aquí es idéntico al anterior y ya es correcto)
 
     function updateUserContext(userId) {
         const currentUser = appData.users.find(u => u.ID_Usuario == userId);
-        const userAvatar = document.getElementById('user-avatar');
-        if (currentUser && userAvatar) {
-            userAvatar.innerHTML = `
+        const userAvatar = document.getElementById('user-avatar'); // Asegúrate de tener este ID en tu HTML
+        const userProfileDiv = document.getElementById('user-profile');
+        
+        if (currentUser && userProfileDiv) {
+            userProfileDiv.innerHTML = `
                 <img class="w-10 h-10 rounded-full" src="https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.Nombre_Completo)}&background=random" alt="User avatar">
                 <div class="ml-3">
                     <p class="text-sm font-semibold text-gray-800">${currentUser.Nombre_Completo}</p>
@@ -222,13 +247,9 @@
     // === LÓGICA DE RENDERIZADO DE VISTAS ===
     // =================================================================================
 
-    /**
-     * FUNCIÓN MEJORADA: Crea la tarjeta para un KPI individual.
-     * Ahora calcula y formatea correctamente según la nueva columna 'Metodo_Agregacion'.
-     */
     function createKpiCard(kpi) {
         const resultsForKpi = appData.results.filter(r => r.ID_KPI === kpi.ID_KPI);
-        if (!resultsForKpi.length) return ''; // No mostrar tarjeta si no hay resultados
+        if (!resultsForKpi.length) return '';
 
         const groupedByMonth = resultsForKpi.reduce((acc, r) => {
             const month = new Date(r.Fecha).getMonth();
@@ -240,16 +261,13 @@
         const currentMonth = new Date().getMonth();
         const monthlyValues = groupedByMonth[currentMonth] || [];
         
-        // --- INICIO DE LA LÓGICA MEJORADA ---
         let currentValue;
-        const aggregationMethod = kpi.Metodo_Agregacion; // Leemos el nuevo campo
+        const aggregationMethod = kpi.Metodo_Agregacion;
 
         if (monthlyValues.length > 0) {
             if (aggregationMethod === 'SUMAR') {
-                // Suma los valores para KPIs como Facturación
                 currentValue = monthlyValues.reduce((sum, value) => sum + value, 0);
             } else {
-                // Promedia los valores para KPIs como Nivel de Servicio
                 currentValue = monthlyValues.reduce((sum, value) => sum + value, 0) / monthlyValues.length;
             }
         } else {
@@ -258,7 +276,6 @@
         
         const progress = kpi.Meta ? (currentValue / kpi.Meta) : 0;
         const progressBarColor = progress >= 0.8 ? 'bg-green-500' : progress >= 0.5 ? 'bg-yellow-500' : 'bg-red-500';
-        // --- FIN DE LA LÓGICA MEJORADA ---
 
         return `
             <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
@@ -284,10 +301,9 @@
     }
 
     function renderDashboard() {
+        // Esta es una lógica de ejemplo para encontrar KPIs "estratégicos"
         const strategicKpis = appData.kpis.filter(kpi => 
-            appData.keyResults.some(kr => kr.ID_Resultado_Clave === kpi.ID_Resultado_Clave && 
-                appData.objectives.some(obj => obj.ID_Objetivo === kr.ID_Objetivo_Asociado)
-            )
+             appData.keyResults.some(kr => kr.ID_Resultado_Clave === kpi.ID_Resultado_Clave)
         );
         mainContent.innerHTML = `
             <h1 class="text-2xl font-bold text-gray-800 mb-6">Dashboard Estratégico</h1>
@@ -295,14 +311,14 @@
                 ${strategicKpis.map(createKpiCard).join('')}
             </div>
         `;
+        document.getElementById('view-title').textContent = 'Dashboard Estratégico';
     }
 
-    // (Aquí irían las demás funciones de renderizado: renderTacticalView, renderPersonalView, etc. que puedes desarrollar en el futuro)
-    function renderTacticalView() { mainContent.innerHTML = '<h1 class="text-2xl font-bold text-gray-800">Vista Táctica (En construcción)</h1>'; }
-    function renderPersonalView() { mainContent.innerHTML = '<h1 class="text-2xl font-bold text-gray-800">Mi Desempeño (En construcción)</h1>'; }
-    function renderMyAssignmentsView() { mainContent.innerHTML = '<h1 class="text-2xl font-bold text-gray-800">Mis Asignaciones (En construcción)</h1>'; }
-    function renderCatalogView() { mainContent.innerHTML = '<h1 class="text-2xl font-bold text-gray-800">Catálogo (En construcción)</h1>'; }
-    function renderAdminView() { mainContent.innerHTML = '<h1 class="text-2xl font-bold text-gray-800">Administración (En construcción)</h1>'; }
+    function renderTacticalView() { mainContent.innerHTML = '<h1 class="text-2xl font-bold text-gray-800">Vista Táctica (En construcción)</h1>'; document.getElementById('view-title').textContent = 'Vista Táctica';}
+    function renderPersonalView() { mainContent.innerHTML = '<h1 class="text-2xl font-bold text-gray-800">Mi Desempeño (En construcción)</h1>'; document.getElementById('view-title').textContent = 'Mi Desempeño';}
+    function renderMyAssignmentsView() { mainContent.innerHTML = '<h1 class="text-2xl font-bold text-gray-800">Mis Asignaciones (En construcción)</h1>'; document.getElementById('view-title').textContent = 'Mis Asignaciones';}
+    function renderCatalogView() { mainContent.innerHTML = '<h1 class="text-2xl font-bold text-gray-800">Catálogo (En construcción)</h1>'; document.getElementById('view-title').textContent = 'Catálogo';}
+    function renderAdminView() { mainContent.innerHTML = '<h1 class="text-2xl font-bold text-gray-800">Administración (En construcción)</h1>'; document.getElementById('view-title').textContent = 'Administración';}
 
     // =================================================================================
     // === INICIALIZACIÓN DE LA APLICACIÓN ===
