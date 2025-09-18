@@ -130,7 +130,6 @@
     const loginForm = document.getElementById('login-form');
     const loginError = document.getElementById('login-error');
     const mainContent = document.getElementById('main-content');
-    const loader = document.getElementById('loader');
 
     // --- CONEXIÓN A GOOGLE SHEETS ---
     const GOOGLE_SHEET_API_URL = 'https://script.google.com/macros/s/AKfycbxQjTjmXv-JYE4Yh77UWtLDPIhXUwXq1zZjaf5S453B7YlHRvqCJVCuWY7-ELpHF4GK/exec'; 
@@ -142,9 +141,8 @@
     let isAdmin = false;
 
     // =================================================================================
-    // === LÓGICA DE DATOS Y UTILIDADES (VERSIÓN MEJORADA) ===
+    // === LÓGICA DE DATOS Y UTILIDADES (VERSIÓN FUSIONADA Y CORRECTA) ===
     // =================================================================================
-
     function processRawData(data) {
         const expectedKeys = ['users', 'objectives', 'keyResults', 'processes', 'kpis', 'results'];
         const cleanData = {};
@@ -154,12 +152,12 @@
             } else { cleanData[key] = []; }
         });
 
-        // Convierte campos clave a números y establece valores por defecto
+        // Convierte campos clave a números/fechas y establece valores por defecto
         cleanData.kpis = cleanData.kpis.map(kpi => ({ 
             ...kpi, 
             Meta: parseFloat(kpi.Meta) || 0, 
             Es_Financiero: String(kpi.Es_Financiero).toLowerCase() === 'verdadero',
-            Metodo_Agregacion: kpi.Metodo_Agregacion || 'PROMEDIAR' // Valor por defecto si no está definido
+            Metodo_Agregacion: kpi.Metodo_Agregacion || 'PROMEDIAR'
         }));
         cleanData.results = cleanData.results.map(res => ({ ...res, Valor: parseFloat(res.Valor) || 0, Fecha: new Date(res.Fecha) }));
         
@@ -170,46 +168,27 @@
         try {
             const response = await fetch(GOOGLE_SHEET_API_URL);
             if (!response.ok) throw new Error('Respuesta de red no fue exitosa.');
-            
             const rawData = await response.json();
             console.log("Datos recibidos de Google Sheet:", rawData);
             appData = processRawData(rawData);
-            
         } catch (error) {
             loginError.textContent = `Error de conexión: ${error.message}`;
         }
     }
-    
-    function formatValue(value, unit, isFinancial, isAdminFlag) {
-        if (isFinancial && !isAdminFlag) {
-            return `Progreso Confidencial`;
-        }
-        if (unit === '%') {
-            return `${(value * 100).toFixed(1)}%`;
-        }
-        if (unit === '$') {
-            return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', minimumFractionDigits: 0 }).format(value);
-        }
-        return value.toLocaleString('es-MX');
-    }
 
     // =================================================================================
-    // === LÓGICA DE AUTENTICACIÓN Y CONTEXTO DE USUARIO (TU VERSIÓN ORIGINAL) ===
+    // === LÓGICA DE AUTENTICACIÓN (TU VERSIÓN ORIGINAL) ===
     // =================================================================================
-
     async function handleLogin(event) {
         event.preventDefault();
         loginError.textContent = '';
         const email = event.target.email.value;
         const password = event.target.password.value;
-
         if (!appData.users || appData.users.length === 0) {
             loginError.textContent = 'Los datos de usuario no se han cargado. Intenta de nuevo.';
             return;
         }
-
         const user = appData.users.find(u => u.Email && u.Email.toLowerCase() === email.toLowerCase());
-
         if (user && user.Contraseña === password) {
             currentUserId = user.ID_Usuario;
             loginContainer.style.display = 'none';
@@ -225,14 +204,14 @@
     }
 
     // =================================================================================
-    // === LÓGICA DE RENDERIZADO DE VISTAS (TU VERSIÓN ORIGINAL CON MEJORAS) ===
+    // === LÓGICA DE RENDERIZADO (TUS FUNCIONES AVANZADAS CON LA CORRECCIÓN DE CÁLCULO) ===
     // =================================================================================
     
     function renderDashboard() {
         const content = document.getElementById('main-content');
         document.getElementById('view-title').textContent = 'Dashboard General';
-        if (!appData.objectives.length) {
-            content.innerHTML = `<p>No se encontraron objetivos.</p>`;
+        if (!appData.objectives || !appData.objectives.length) {
+            content.innerHTML = `<div class="text-center p-10 bg-white rounded-lg border"><p class="text-gray-500">No se encontraron objetivos para mostrar.</p></div>`;
             return;
         }
 
@@ -246,11 +225,10 @@
                 const kpis = appData.kpis.filter(kpi => kpi.ID_Resultado_Clave === kr.ID_Resultado_Clave);
                 if (kpis.length > 0) {
                     const krProgress = kpis.reduce((acc, kpi) => {
-                        // Lógica de cálculo del valor actual del KPI
                         const resultsForKpi = appData.results.filter(r => r.ID_KPI === kpi.ID_KPI);
                         const currentMonth = new Date().getMonth();
                         const monthlyValues = resultsForKpi
-                            .filter(r => r.Fecha.getMonth() === currentMonth)
+                            .filter(r => r.Fecha && r.Fecha.getMonth() === currentMonth)
                             .map(r => r.Valor);
                         
                         let currentValue = 0;
@@ -261,9 +239,10 @@
                                 currentValue = monthlyValues.reduce((a, b) => a + b, 0) / monthlyValues.length;
                             }
                         }
-                        return acc + (kpi.Meta > 0 ? (currentValue / kpi.Meta) : 0);
+                        const kpiProgress = kpi.Meta > 0 ? (currentValue / kpi.Meta) : 0;
+                        return acc + kpiProgress;
                     }, 0) / kpis.length;
-                    totalProgress += krProgress;
+                    totalProgress += isNaN(krProgress) ? 0 : krProgress;
                     krCount++;
                 }
             });
@@ -289,9 +268,54 @@
                         <div class="space-y-5">`;
 
             keyResults.forEach(kr => {
-                const kpis = appData.kpis.filter(kpi => kpi.ID_Resultado_Clave === kr.ID_Resultado_Clave);
-                // Aquí podrías agregar una lógica más detallada por KR si lo deseas
-                html += `<div><p class="font-medium text-gray-700">${kr.Nombre_Resultado_Clave}</p></div>`;
+                const kpis = appData.kpis.filter(kpi => kpi.ID_Resultado_Clave === kr.ID_Resultado_Clave); 
+                let current = 0, target = 0;
+                let isFinancial = false, unit = '';
+                
+                if(kpis.length > 0) {
+                    const firstKpi = kpis[0];
+                    unit = firstKpi.Unidad;
+                    isFinancial = firstKpi.Es_Financiero;
+
+                    if (firstKpi.Metodo_Agregacion === 'SUMAR') {
+                        kpis.forEach(kpi => {
+                            const results = appData.results.filter(r => r.ID_KPI === kpi.ID_KPI);
+                            current += results.reduce((sum, r) => sum + r.Valor, 0);
+                            target += kpi.Meta;
+                        });
+                    } else { // Promediar
+                        let totalCurrentSum = 0, kpiWithResultsCount = 0, totalTargetSum = 0;
+                        kpis.forEach(kpi => {
+                           const results = appData.results.filter(r => r.ID_KPI === kpi.ID_KPI);
+                           if(results.length > 0){
+                               const latestResult = results.sort((a,b) => b.Fecha - a.Fecha)[0].Valor;
+                               totalCurrentSum += latestResult;
+                               kpiWithResultsCount++;
+                           }
+                           totalTargetSum += kpi.Meta;
+                        });
+                        current = kpiWithResultsCount > 0 ? totalCurrentSum / kpiWithResultsCount : 0;
+                        target = kpis.length > 0 ? totalTargetSum / kpis.length : 0;
+                    }
+                }
+
+                const progress = target > 0 ? Math.min((current / target) * 100, 100) : 0;
+                let metaDetails;
+                
+                if (isFinancial && !isAdmin) {
+                    metaDetails = `Progreso: <span class="font-semibold">${progress.toFixed(1)}%</span>`;
+                } else if (unit === '%') {
+                    metaDetails = `Meta: ${(target*100).toFixed(1)}% | Actual: ${(current*100).toFixed(1)}%`;
+                } else {
+                    const formatOptions = unit === '$' ? { style: 'currency', currency: 'MXN', minimumFractionDigits: 0 } : {};
+                    metaDetails = `Meta: ${target.toLocaleString('es-MX', formatOptions)} | Actual: ${current.toLocaleString('es-MX', formatOptions)}`;
+                }
+
+                html += `
+                    <div>
+                        <div class="flex justify-between items-center mb-1"><p class="font-medium text-gray-700">${kr.Nombre_Resultado_Clave}</p><p class="text-sm text-gray-500">${metaDetails}</p></div>
+                        <div class="w-full bg-gray-200 rounded-full h-2"><div class="bg-teal-500 h-2 rounded-full" style="width: ${progress.toFixed(1)}%"></div></div>
+                    </div>`;
             });
             
             html += `</div></div></div>`;
@@ -302,12 +326,257 @@
         addAccordionListeners();
     }
     
-    // (Aquí van TODAS TUS OTRAS FUNCIONES de renderizado: renderTacticalView, renderPersonalView, etc. sin cambios)
-    function renderTacticalView() { mainContent.innerHTML = '<h1 class="text-2xl font-bold text-gray-800">Vista Táctica (En construcción)</h1>'; document.getElementById('view-title').textContent = 'Vista Táctica';}
-    function renderPersonalView() { mainContent.innerHTML = '<h1 class="text-2xl font-bold text-gray-800">Mi Desempeño (En construcción)</h1>'; document.getElementById('view-title').textContent = 'Mi Desempeño';}
-    function renderMyAssignmentsView() { mainContent.innerHTML = '<h1 class="text-2xl font-bold text-gray-800">Mis Asignaciones (En construcción)</h1>'; document.getElementById('view-title').textContent = 'Mis Asignaciones';}
-    function renderCatalogView() { mainContent.innerHTML = '<h1 class="text-2xl font-bold text-gray-800">Catálogo (En construcción)</h1>'; document.getElementById('view-title').textContent = 'Catálogo';}
-    function renderAdminView() { mainContent.innerHTML = '<h1 class="text-2xl font-bold text-gray-800">Administración (En construcción)</h1>'; document.getElementById('view-title').textContent = 'Administración';}
+    function renderTacticalView() {
+        const content = document.getElementById('main-content');
+        document.getElementById('view-title').textContent = 'Vista Táctica (Por Proceso)';
+        if (!appData.processes.length) {
+            content.innerHTML = `<div class="text-center p-10 bg-white rounded-lg border"><p class="text-gray-500">No hay procesos para mostrar.</p></div>`;
+            return;
+        }
+
+        let html = '<div class="space-y-4">';
+        appData.processes.forEach(process => {
+            html += `
+                <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                    <button class="w-full text-left p-5 flex justify-between items-center hover:bg-gray-50 accordion-toggle">
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-800">${process.Nombre_Proceso}</h3>
+                            <p class="text-sm text-gray-500 mt-1">Dueño: ${process.Dueño_Proceso}</p>
+                        </div>
+                        <svg class="w-5 h-5 text-gray-500 transition-transform transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div class="accordion-content hidden p-6 pt-0 border-t border-gray-200">
+                        <div class="mt-4 space-y-4">`;
+
+            const processKpis = appData.kpis.filter(kpi => kpi.ID_Proceso_Asc && process.ID_Proceso && kpi.ID_Proceso_Asc.trim() === process.ID_Proceso.trim());
+            if(processKpis.length > 0) {
+                processKpis.forEach(kpi => {
+                    const results = appData.results.filter(r => r.ID_KPI === kpi.ID_KPI);
+                    const current = results.length > 0 ? results.sort((a,b) => new Date(b.Fecha) - new Date(a.Fecha))[0].Valor : 0;
+                    const target = kpi.Meta;
+                    const progress = target > 0 ? Math.min((current / target) * 100, 100) : 0;
+                    
+                    let metaDetails;
+                    if (kpi.Es_Financiero && !isAdmin) {
+                        metaDetails = `${progress.toFixed(1)}%`;
+                    } else if (kpi.Unidad === '%') {
+                        metaDetails = `${(current * 100).toFixed(1)}% / ${(target * 100).toFixed(1)}%`;
+                    } else {
+                        const formatOptions = kpi.Unidad === '$' ? { style: 'currency', currency: 'MXN', minimumFractionDigits: 0 } : {};
+                        metaDetails = `${current.toLocaleString('es-MX', formatOptions)} / ${target.toLocaleString('es-MX', formatOptions)}`;
+                    }
+
+                    html += `
+                        <div>
+                            <div class="flex justify-between items-center text-sm mb-1"><span class="font-medium text-gray-700">${kpi.Nombre_KPI}</span><span class="font-semibold text-gray-600">${metaDetails}</span></div>
+                            <div class="w-full bg-gray-200 rounded-full h-2"><div class="bg-cyan-500 h-2 rounded-full" style="width: ${progress}%"></div></div>
+                        </div>`;
+                });
+            } else {
+                 html += `<p class="text-sm text-gray-500">No hay KPIs asociados a este proceso.</p>`;
+            }
+
+            html += `</div></div></div>`;
+        });
+        html += '</div>';
+        content.innerHTML = html;
+        addAccordionListeners();
+    }
+    
+    function renderPersonalView() {
+        const content = document.getElementById('main-content');
+        document.getElementById('view-title').textContent = 'Mi Tablero Personal';
+        const userKpis = appData.kpis.filter(kpi => kpi.ID_Usuario_Res == currentUserId);
+
+        if (userKpis.length === 0) {
+            content.innerHTML = `<div class="text-center p-10 bg-white rounded-lg border"><p class="text-gray-500">Aún no tienes KPIs asignados.</p></div>`;
+            return;
+        }
+
+        let totalProgressSum = 0;
+        let kpisWithTarget = 0;
+        const involvedProcesses = new Set();
+
+        userKpis.forEach(kpi => {
+            const results = appData.results.filter(r => r.ID_KPI === kpi.ID_KPI);
+            const current = results.length > 0 ? results.sort((a,b) => new Date(b.Fecha) - new Date(a.Fecha))[0].Valor : 0;
+            if (kpi.Meta > 0) {
+                totalProgressSum += Math.min((current / kpi.Meta), 1); 
+                kpisWithTarget++;
+            }
+            const process = appData.processes.find(p => p.ID_Proceso === kpi.ID_Proceso_Asc);
+            if (process) involvedProcesses.add(process.Nombre_Proceso);
+        });
+
+        const averageProgress = kpisWithTarget > 0 ? (totalProgressSum / kpisWithTarget) * 100 : 0;
+        const userFirstName = currentUser.Nombre_Completo ? currentUser.Nombre_Completo.split(' ')[0] : 'Usuario';
+
+        let html = `
+            <div class="space-y-8">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-800">Hola, ${userFirstName} 👋</h2>
+                    <p class="mt-1 text-gray-600">Este es tu resumen de desempeño personal.</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-white p-6 rounded-xl border border-gray-200 flex items-center gap-5">
+                        <div class="bg-sky-100 text-sky-600 p-3 rounded-full"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg></div>
+                        <div><p class="text-sm text-gray-500">KPIs Asignados</p><p class="text-2xl font-bold text-gray-800">${userKpis.length}</p></div>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl border border-gray-200 flex items-center gap-5">
+                        <div class="bg-teal-100 text-teal-600 p-3 rounded-full"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg></div>
+                        <div><p class="text-sm text-gray-500">Progreso Promedio</p><p class="text-2xl font-bold text-gray-800">${averageProgress.toFixed(1)}%</p></div>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl border border-gray-200 flex items-center gap-5">
+                        <div class="bg-indigo-100 text-indigo-600 p-3 rounded-full"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 8v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg></div>
+                        <div><p class="text-sm text-gray-500">Procesos Involucrados</p><p class="text-2xl font-bold text-gray-800">${involvedProcesses.size}</p></div>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">Detalle de mis KPIs</h3>
+                    <div class="space-y-4">`;
+        userKpis.forEach(kpi => {
+            const results = appData.results.filter(r => r.ID_KPI === kpi.ID_KPI).sort((a,b) => new Date(a.Fecha) - new Date(b.Fecha));
+            const current = results.length > 0 ? results[results.length - 1].Valor : 0;
+            const target = kpi.Meta;
+            const progress = target > 0 ? Math.min((current / target) * 100, 100) : 0;
+            const processName = appData.processes.find(p => p.ID_Proceso === kpi.ID_Proceso_Asc)?.Nombre_Proceso || 'N/A';
+            let metaDisplay;
+            if (kpi.Unidad === '%') {
+                metaDisplay = `${(current * 100).toFixed(1)}% / ${(target * 100).toFixed(1)}%`;
+            } else {
+                const formatOptions = kpi.Unidad === '$' ? { style: 'currency', currency: 'MXN', minimumFractionDigits: 0 } : {};
+                metaDisplay = `${current.toLocaleString('es-MX', formatOptions)} / ${target.toLocaleString('es-MX', formatOptions)}`;
+            }
+            html += `
+                <div class="bg-white p-5 rounded-xl border border-gray-200 grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
+                    <div class="md:col-span-1"><p class="font-semibold text-gray-800">${kpi.Nombre_KPI}</p><p class="text-sm text-gray-500">${processName}</p></div>
+                    <div class="md:col-span-1">
+                        <div class="flex justify-between items-center text-sm mb-1"><span class="text-gray-600">Progreso</span><span class="font-semibold ${progress >= 80 ? 'text-green-600' : 'text-amber-600'}">${progress.toFixed(1)}%</span></div>
+                        <div class="w-full bg-gray-200 rounded-full h-2"><div class="bg-gradient-to-r ${progress >= 80 ? 'from-green-400 to-green-500' : 'from-amber-400 to-amber-500'} h-2 rounded-full" style="width: ${progress}%"></div></div>
+                        <p class="text-xs text-right text-gray-500 mt-1">${metaDisplay}</p>
+                    </div>
+                    <div class="md:col-span-1 h-20"><canvas id="chart-kpi-${kpi.ID_KPI}"></canvas></div>
+                </div>`;
+        });
+        html += `</div></div></div>`;
+        content.innerHTML = html;
+        renderPersonalCharts(userKpis);
+    }
+    
+    function renderPersonalCharts(userKpis) {
+        userKpis.forEach(kpi => {
+            const chartCanvas = document.getElementById(`chart-kpi-${kpi.ID_KPI}`);
+            if (chartCanvas) {
+                const historicalResults = appData.results.filter(r => r.ID_KPI === kpi.ID_KPI).sort((a,b) => new Date(a.Fecha) - new Date(b.Fecha));
+                const labels = historicalResults.map(r => new Date(r.Fecha).toLocaleDateString('es-MX', { month: 'short', day: 'numeric' }));
+                const dataPoints = historicalResults.map(r => r.Valor);
+                new Chart(chartCanvas, {type: 'line',data: {labels: labels,datasets: [{label: 'Valor',data: dataPoints,borderColor: '#0ea5e9',backgroundColor: 'rgba(14, 165, 233, 0.1)',borderWidth: 2,pointRadius: 2,pointBackgroundColor: '#0284c7',tension: 0.3,fill: true,}]},options: {responsive: true,maintainAspectRatio: false,plugins: { legend: { display: false }, tooltip: { enabled: true } },scales: {x: { display: false },y: { display: false }}}});
+            }
+        });
+    }
+
+    function renderMyAssignmentsView() {
+        const content = document.getElementById('main-content');
+        document.getElementById('view-title').textContent = 'Mis Asignaciones';
+        const assignedKpis = appData.kpis.filter(kpi => kpi.ID_Usuario_Res == currentUserId);
+        if (assignedKpis.length === 0) {
+            content.innerHTML = `<div class="text-center p-10 bg-white rounded-lg border"><p class="text-gray-500">No tienes KPIs asignados.</p></div>`;
+            return;
+        }
+        let html = `<div class="bg-white rounded-xl border border-gray-200 shadow-sm"><div class="overflow-x-auto"><table class="w-full text-sm text-left text-gray-500"><thead class="text-xs text-gray-700 uppercase bg-gray-50"><tr><th scope="col" class="px-6 py-3">Nombre del KPI</th><th scope="col" class="px-6 py-3">Frecuencia</th><th scope="col" class="px-6 py-3">Meta</th></tr></thead><tbody>`;
+        assignedKpis.forEach(kpi => {
+            let metaDisplay;
+            if (kpi.Es_Financiero && !isAdmin) { metaDisplay = `Objetivo de Progreso`;} 
+            else if (kpi.Unidad === '%') { metaDisplay = `${(kpi.Meta * 100).toFixed(1)}%`;} 
+            else { const formatOptions = kpi.Unidad === '$' ? { style: 'currency', currency: 'MXN', minimumFractionDigits: 0 } : {}; metaDisplay = `${kpi.Meta.toLocaleString('es-MX', formatOptions)} ${kpi.Unidad === '$' ? '' : kpi.Unidad}`; }
+            html += `<tr class="bg-white border-b hover:bg-gray-50"><th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">${kpi.Nombre_KPI}</th><td class="px-6 py-4">${kpi.Frecuencia}</td><td class="px-6 py-4">${metaDisplay}</td></tr>`;
+        });
+        html += `</tbody></table></div></div>`;
+        content.innerHTML = html;
+    }
+
+    function renderCatalogView() {
+        const content = document.getElementById('main-content');
+        document.getElementById('view-title').textContent = 'Catálogo de KPIs';
+        let html = `
+            <div class="space-y-6">
+                <div><h2 class="text-2xl font-bold text-gray-800">Catálogo de Indicadores</h2><p class="mt-1 text-gray-600">Busca y explora todos los KPIs definidos en la organización.</p></div>
+                <div><input type="text" id="kpi-search" placeholder="🔎 Buscar por nombre, proceso, responsable..." class="w-full md:w-1-2 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition"></div>
+                <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden"><div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left text-gray-500"><thead class="text-xs text-gray-700 uppercase bg-gray-50"><tr><th scope="col" class="px-6 py-3">Nombre del KPI</th><th scope="col" class="px-6 py-3">Resultado Clave Asociado</th><th scope="col" class="px-6 py-3">Proceso</th><th scope="col" class="px-6 py-3">Responsable</th><th scope="col" class="px-6 py-3">Frecuencia</th></tr></thead><tbody id="kpi-catalog-body"></tbody></table>
+                </div></div>
+            </div>`;
+        content.innerHTML = html;
+        populateCatalogTable(appData.kpis);
+        document.getElementById('kpi-search').addEventListener('keyup', (event) => {
+            const searchTerm = event.target.value.toLowerCase();
+            const filteredKpis = appData.kpis.filter(kpi => {
+                const kr = appData.keyResults.find(k => k.ID_Resultado_Clave === kpi.ID_Resultado_Clave);
+                const process = appData.processes.find(p => p.ID_Proceso === kpi.ID_Proceso_Asc);
+                const user = appData.users.find(u => u.ID_Usuario == kpi.ID_Usuario_Res);
+                return kpi.Nombre_KPI.toLowerCase().includes(searchTerm) || (kr && kr.Nombre_Resultado_Clave.toLowerCase().includes(searchTerm)) || (process && process.Nombre_Proceso.toLowerCase().includes(searchTerm)) || (user && user.Nombre_Completo.toLowerCase().includes(searchTerm));
+            });
+            populateCatalogTable(filteredKpis);
+        });
+    }
+    
+    function populateCatalogTable(kpiList) {
+        const tableBody = document.getElementById('kpi-catalog-body');
+        if (!tableBody) return;
+        if (kpiList.length === 0) { tableBody.innerHTML = `<tr><td colspan="5" class="text-center p-6 text-gray-500">No se encontraron KPIs.</td></tr>`; return; }
+        let tableHtml = '';
+        kpiList.forEach(kpi => {
+            const krName = appData.keyResults.find(kr => kr.ID_Resultado_Clave === kpi.ID_Resultado_Clave)?.Nombre_Resultado_Clave || '<em class="text-gray-400">N/A</em>';
+            const processName = appData.processes.find(p => p.ID_Proceso === kpi.ID_Proceso_Asc)?.Nombre_Proceso || '<em class="text-gray-400">N/A</em>';
+            const userName = appData.users.find(u => u.ID_Usuario == kpi.ID_Usuario_Res)?.Nombre_Completo || '<em class="text-gray-400">N/A</em>';
+            tableHtml += `<tr class="bg-white border-b hover:bg-gray-50"><th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">${kpi.Nombre_KPI}</th><td class="px-6 py-4">${krName}</td><td class="px-6 py-4">${processName}</td><td class="px-6 py-4">${userName}</td><td class="px-6 py-4">${kpi.Frecuencia}</td></tr>`;
+        });
+        tableBody.innerHTML = tableHtml;
+    }
+    
+    function renderAdminView() {
+        const content = document.getElementById('main-content');
+        document.getElementById('view-title').textContent = 'Panel de Administración';
+        const totalUsers = appData.users.length;
+        const adminCount = appData.users.filter(u => u.Rol === 'admin').length;
+        const totalKpis = appData.kpis.length;
+
+        let html = `
+            <div class="space-y-8">
+                <div><h2 class="text-2xl font-bold text-gray-800">Panel de Administración</h2><p class="mt-1 text-gray-600">Vista general del sistema y gestión de usuarios.</p></div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-white p-6 rounded-xl border border-gray-200 flex items-center gap-5">
+                        <div class="bg-blue-100 text-blue-600 p-3 rounded-full"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.653-.125-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.653.125-1.283.356-1.857m0 0a3.001 3.001 0 015.644 0M12 12a3 3 0 100-6 3 3 0 000 6z"></path></svg></div>
+                        <div><p class="text-sm text-gray-500">Total de Usuarios</p><p class="text-2xl font-bold text-gray-800">${totalUsers}</p></div>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl border border-gray-200 flex items-center gap-5">
+                        <div class="bg-red-100 text-red-600 p-3 rounded-full"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg></div>
+                        <div><p class="text-sm text-gray-500">Administradores</p><p class="text-2xl font-bold text-gray-800">${adminCount}</p></div>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl border border-gray-200 flex items-center gap-5">
+                        <div class="bg-green-100 text-green-600 p-3 rounded-full"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg></div>
+                        <div><p class="text-sm text-gray-500">KPIs Totales Definidos</p><p class="text-2xl font-bold text-gray-800">${totalKpis}</p></div>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">Gestión de Usuarios</h3>
+                    <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm text-left text-gray-500">
+                                <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                                    <tr><th scope="col" class="px-6 py-3">Nombre Completo</th><th scope="col" class="px-6 py-3">Rol</th><th scope="col" class="px-6 py-3">Email</th><th scope="col" class="px-6 py-3">KPIs Asignados</th></tr>
+                                </thead>
+                                <tbody>`;
+        appData.users.forEach(user => {
+            const assignedKpisCount = appData.kpis.filter(kpi => kpi.ID_Usuario_Res == user.ID_Usuario).length;
+            const roleBadge = user.Rol === 'admin' 
+                ? '<span class="bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded-full">Admin</span>' 
+                : '<span class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full">User</span>';
+            html += `<tr class="bg-white border-b hover:bg-gray-50"><th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">${user.Nombre_Completo}</th><td class="px-6 py-4">${roleBadge}</td><td class="px-6 py-4">${user.Email || 'N/A'}</td><td class="px-6 py-4 text-center">${assignedKpisCount}</td></tr>`;
+        });
+        html += `</tbody></table></div></div></div></div>`;
+        content.innerHTML = html;
+    }
 
     // =================================================================================
     // === INICIALIZACIÓN Y HELPERS (TU VERSIÓN ORIGINAL) ===
@@ -317,8 +586,10 @@
             button.addEventListener('click', () => {
                 const content = button.nextElementSibling;
                 const icon = button.querySelector('svg');
-                content.classList.toggle('hidden');
-                icon.classList.toggle('rotate-180');
+                if (content && icon) {
+                    content.classList.toggle('hidden');
+                    icon.classList.toggle('rotate-180');
+                }
             });
         });
     }
@@ -327,9 +598,10 @@
         currentUserId = userId;
         currentUser = appData.users.find(u => u.ID_Usuario == currentUserId) || {};
         isAdmin = currentUser.Rol === 'admin';
-        document.getElementById('nav-admin').style.display = isAdmin ? 'flex' : 'none';
+        const adminNav = document.getElementById('nav-admin');
+        if (adminNav) { adminNav.style.display = isAdmin ? 'flex' : 'none'; }
         const profileDiv = document.getElementById('user-profile');
-        if(profileDiv && currentUser) {
+        if(profileDiv && currentUser.Nombre_Completo) {
             profileDiv.innerHTML = `
                 <img class="h-10 w-10 rounded-full object-cover" src="${currentUser.Avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.Nombre_Completo.split(' ')[0])}`}" alt="User avatar">
                 <div class="ml-3"><p class="text-sm font-semibold text-gray-800">${currentUser.Nombre_Completo}</p><a href="#" id="logout-link" class="text-xs text-gray-500 hover:text-sky-600">Cerrar sesión</a></div>`;
@@ -345,7 +617,10 @@
             document.getElementById(id)?.classList.add('active-nav');
         }
         Object.keys(navLinks).forEach(id => {
-            document.getElementById(id).addEventListener('click', (e) => { e.preventDefault(); navLinks[id](); setActiveNav(id); });
+            const link = document.getElementById(id);
+            if (link) {
+                link.addEventListener('click', (e) => { e.preventDefault(); navLinks[id](); setActiveNav(id); });
+            }
         });
         updateUserContext(currentUserId);
         renderDashboard();
@@ -360,4 +635,3 @@
 
 </body>
 </html>
-
