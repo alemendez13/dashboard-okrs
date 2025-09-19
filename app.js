@@ -151,7 +151,6 @@ function updateUserContext() {
     if (!currentUserId || !appData.users) return;
     const currentUser = appData.users.find(u => u.ID_Usuario === currentUserId);
     if (currentUser) {
-        // CORRECCIÓN: Se añade una verificación para asegurar que currentUser.Rol existe antes de usar toLowerCase().
         isAdmin = currentUser.Rol && currentUser.Rol.toLowerCase() === 'admin';
         userPill.innerHTML = `
             <div class="ml-3">
@@ -182,8 +181,10 @@ function processData(data) {
 function getFilteredData() {
     const { kpis, results } = appData;
     
-    // 1. Filtrar KPIs por frecuencia
-    const filteredKpis = kpis.filter(k => k.Frecuencia.toLowerCase() === currentFrequency);
+    // 1. CORRECCIÓN: Filtrar KPIs asegurando que la propiedad 'Frecuencia' existe.
+    const filteredKpis = kpis.filter(k => 
+        k.Frecuencia && typeof k.Frecuencia === 'string' && k.Frecuencia.toLowerCase() === currentFrequency
+    );
     
     // 2. Filtrar Resultados por rango de fecha según la frecuencia
     let filteredResults;
@@ -221,9 +222,10 @@ function calculateKpiMetrics(kpi, allResults) {
     }
 
     let currentValue;
-    if (kpi.Metodo_Agregacion.toLowerCase() === 'sumar') {
+    // CORRECCIÓN: Asegurar que 'Metodo_Agregacion' existe antes de usarlo.
+    if (kpi.Metodo_Agregacion && kpi.Metodo_Agregacion.toLowerCase() === 'sumar') {
         currentValue = relevantResults.reduce((sum, r) => sum + parseFloat(r.Valor || 0), 0);
-    } else { // Promediar u otro
+    } else { // Promediar o cualquier otro caso por defecto
         const sum = relevantResults.reduce((sum, r) => sum + parseFloat(r.Valor || 0), 0);
         currentValue = sum / relevantResults.length;
     }
