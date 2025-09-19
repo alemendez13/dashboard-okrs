@@ -151,7 +151,8 @@ function updateUserContext() {
     if (!currentUserId || !appData.users) return;
     const currentUser = appData.users.find(u => u.ID_Usuario === currentUserId);
     if (currentUser) {
-        isAdmin = currentUser.Rol.toLowerCase() === 'admin';
+        // CORRECCIÓN: Se añade una verificación para asegurar que currentUser.Rol existe antes de usar toLowerCase().
+        isAdmin = currentUser.Rol && currentUser.Rol.toLowerCase() === 'admin';
         userPill.innerHTML = `
             <div class="ml-3">
                 <p class="text-sm font-semibold text-gray-800">${currentUser.Nombre_Completo}</p>
@@ -445,3 +446,4 @@ function formatValue(value, unit) {
     }
     return (value || 0).toLocaleString('es-MX', { maximumFractionDigits: 1 });
 }
+
