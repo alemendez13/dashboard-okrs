@@ -23,16 +23,26 @@ let currentRenderFunction = () => {}; // Función de la vista actual para re-ren
 // === 2. INICIALIZACIÓN Y FLUJO PRINCIPAL ===
 // =================================================================================
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    showLoader();
+    // 1. SIEMPRE se cargan los datos primero para que estén disponibles.
+    await fetchData();
+
+    // 2. Se asocia el evento al formulario de login.
     loginForm.addEventListener('submit', handleLogin);
+
+    // 3. Se comprueba si ya existe una sesión.
     const storedUserId = localStorage.getItem('currentUserId');
     if (storedUserId) {
         currentUserId = parseInt(storedUserId, 10);
+        // El resto de la app se inicializa de forma segura.
         initializeApp().catch(console.error);
     } else {
+        // Si no hay sesión, simplemente se muestra la vista de login.
         showLoginView();
     }
 });
+
 
 async function initializeApp() {
     showLoader();
