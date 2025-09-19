@@ -1,0 +1,43 @@
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #f8fafc; /* gray-50 */
+}
+
+.active-nav {
+    background-color: #e0f2fe; /* sky-100 */
+    color: #0c4a6e; /* sky-900 */
+    font-weight: 600;
+}
+
+/* --- Loader Spinner --- */
+#loader .loader-spinner {
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border-left-color: #0284c7; /* sky-600 */
+    animation: spin 1s ease infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* --- Estilos para el filtro de frecuencia --- */
+.freq-btn {
+    color: #4b5563; /* gray-600 */
+    background-color: #f3f4f6; /* gray-200 */
+    transition: all 0.2s ease-in-out;
+}
+
+.freq-btn:hover {
+    background-color: #e5e7eb; /* gray-300 */
+}
+
+.freq-btn.active-freq {
+    color: #ffffff;
+    background-color: #0ea5e9; /* sky-500 */
+    font-weight: 600;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
