@@ -27,14 +27,12 @@ let currentRenderFunction = () => {}; // Almacena la función de la vista actual
 // =================================================================================
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Revisar si hay un usuario en sessionStorage para mantener la sesión
     const storedUserId = sessionStorage.getItem('currentUserId');
     if (storedUserId) {
         showLoader();
         currentUserId = parseInt(storedUserId, 10);
         fetchDataAndInitialize();
     } else {
-        // Si no hay sesión, solo mostramos la vista de login
         showLoginView();
         loginForm.addEventListener('submit', handleLogin);
     }
@@ -43,17 +41,22 @@ document.addEventListener('DOMContentLoaded', () => {
 async function fetchDataAndInitialize() {
     try {
         const response = await fetch(API_URL);
-        if (!response.ok) throw new Error('Network response was not ok');
+        if (!response.ok) throw new Error(`Network response was not ok (${response.status})`);
         const rawData = await response.json();
+
+        // ANÁLISIS DETALLADO: Manejo de errores desde la API de Google Apps Script
+        if (rawData.error) {
+            throw new Error(`API Error: ${rawData.error}`);
+        }
         
-        // Procesar los datos una vez para optimizar
-        appData = processData(rawData);
+        // CORRECCIÓN CLAVE: Sanitizar y asegurar la estructura de los datos
+        appData = sanitizeData(rawData);
         
         initializeApp();
     } catch (error) {
-        console.error('Error fetching data:', error);
-        showLoginView(); // Si falla, volver al login
-        loginError.textContent = 'No se pudo cargar la información. Intenta de nuevo.';
+        console.error('Error fetching or processing data:', error);
+        showLoginView();
+        loginError.textContent = 'No se pudo cargar la información. Revisa la consola para más detalles.';
         loginError.classList.remove('hidden');
     }
 }
@@ -62,7 +65,6 @@ function initializeApp() {
     setupEventListeners();
     updateUserContext();
     
-    // Vista y frecuencia iniciales
     currentRenderFunction = renderDashboard;
     currentRenderFunction();
 
@@ -92,7 +94,6 @@ function setupEventListeners() {
         btn.addEventListener('click', () => {
             currentFrequency = btn.dataset.freq;
             setActiveFrequency(currentFrequency);
-            // Re-renderizar la vista actual con la nueva frecuencia
             if (typeof currentRenderFunction === 'function') {
                 currentRenderFunction();
             }
@@ -109,12 +110,13 @@ async function handleLogin(event) {
     showLoader();
     loginError.classList.add('hidden');
 
-    // Se re-fetchan los datos en cada intento de login para seguridad
     try {
         const response = await fetch(API_URL);
         if (!response.ok) throw new Error('Error de conexión.');
         const rawData = await response.json();
-        appData = processData(rawData); // Procesar datos frescos
+        if (rawData.error) throw new Error(rawData.error);
+        
+        appData = sanitizeData(rawData);
 
         const email = event.target.email.value;
         const password = event.target.password.value;
@@ -122,7 +124,7 @@ async function handleLogin(event) {
 
         if (user) {
             currentUserId = user.ID_Usuario;
-            sessionStorage.setItem('currentUserId', currentUserId); // Guardar sesión
+            sessionStorage.setItem('currentUserId', currentUserId);
             initializeApp();
         } else {
             loginError.textContent = 'Email o contraseña incorrectos.';
@@ -143,7 +145,6 @@ function handleLogout() {
     isAdmin = false;
     appData = {};
     showLoginView();
-    // Ocultar el link de admin al cerrar sesión
     document.getElementById('nav-admin')?.classList.add('hidden');
 }
 
@@ -158,8 +159,6 @@ function updateUserContext() {
                 <a href="#" id="logout-link" class="text-xs text-gray-500 hover:text-sky-600">Cerrar sesión</a>
             </div>`;
         document.getElementById('logout-link').addEventListener('click', handleLogout);
-
-        // Mostrar/Ocultar el link de Admin según el rol
         document.getElementById('nav-admin')?.classList.toggle('hidden', !isAdmin);
     }
 }
@@ -168,32 +167,41 @@ function updateUserContext() {
 // === 4. LÓGICA DE PROCESAMIENTO Y FILTRADO DE DATOS ===
 // =================================================================================
 
-function processData(data) {
-    // Convertir fechas en el array de resultados para facilitar el filtrado
-    if (data.results) {
-        data.results.forEach(r => {
-            r.Fecha = new Date(r.Fecha);
-        });
-    }
-    return data;
+function sanitizeData(data) {
+    // CORRECCIÓN FUNDAMENTAL: Asegura que todos los arrays de datos existen.
+    const sanitized = {
+        users: data.users || [],
+        objectives: data.objectives || [],
+        keyResults: data.keyResults || [],
+        processes: data.processes || [],
+        kpis: data.kpis || [],
+        results: data.results || []
+    };
+
+    // Convierte fechas en el array de resultados para facilitar el filtrado
+    sanitized.results.forEach(r => {
+        r.Fecha = new Date(r.Fecha);
+    });
+    
+    return sanitized;
 }
 
+
 function getFilteredData() {
-    const { kpis, results } = appData;
+    // CORRECCIÓN DEFENSIVA: Usa arrays vacíos como fallback si appData no está listo.
+    const { kpis = [], results = [] } = appData || {};
     
-    // 1. CORRECCIÓN: Filtrar KPIs asegurando que la propiedad 'Frecuencia' existe.
     const filteredKpis = kpis.filter(k => 
         k.Frecuencia && typeof k.Frecuencia === 'string' && k.Frecuencia.toLowerCase() === currentFrequency
     );
     
-    // 2. Filtrar Resultados por rango de fecha según la frecuencia
-    let filteredResults;
+    let filteredResults = [];
     const now = new Date();
 
     if (currentFrequency === 'semanal') {
         const startOfWeek = new Date(now);
         const day = now.getDay();
-        const diff = now.getDate() - day + (day === 0 ? -6 : 1); // Lunes como inicio de semana
+        const diff = now.getDate() - day + (day === 0 ? -6 : 1);
         startOfWeek.setDate(diff);
         startOfWeek.setHours(0, 0, 0, 0);
 
@@ -201,15 +209,15 @@ function getFilteredData() {
         endOfWeek.setDate(startOfWeek.getDate() + 6);
         endOfWeek.setHours(23, 59, 59, 999);
         
-        filteredResults = results.filter(r => r.Fecha >= startOfWeek && r.Fecha <= endOfWeek);
+        filteredResults = results.filter(r => r.Fecha instanceof Date && !isNaN(r.Fecha) && r.Fecha >= startOfWeek && r.Fecha <= endOfWeek);
     } else if (currentFrequency === 'mensual') {
         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
         const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
-        filteredResults = results.filter(r => r.Fecha >= startOfMonth && r.Fecha <= endOfMonth);
+        filteredResults = results.filter(r => r.Fecha instanceof Date && !isNaN(r.Fecha) && r.Fecha >= startOfMonth && r.Fecha <= endOfMonth);
     } else { // anual
         const startOfYear = new Date(now.getFullYear(), 0, 1);
         const endOfYear = new Date(now.getFullYear(), 11, 31, 23, 59, 59, 999);
-        filteredResults = results.filter(r => r.Fecha >= startOfYear && r.Fecha <= endOfYear);
+        filteredResults = results.filter(r => r.Fecha instanceof Date && !isNaN(r.Fecha) && r.Fecha >= startOfYear && r.Fecha <= endOfYear);
     }
     
     return { filteredKpis, filteredResults };
@@ -222,10 +230,9 @@ function calculateKpiMetrics(kpi, allResults) {
     }
 
     let currentValue;
-    // CORRECCIÓN: Asegurar que 'Metodo_Agregacion' existe antes de usarlo.
     if (kpi.Metodo_Agregacion && kpi.Metodo_Agregacion.toLowerCase() === 'sumar') {
         currentValue = relevantResults.reduce((sum, r) => sum + parseFloat(r.Valor || 0), 0);
-    } else { // Promediar o cualquier otro caso por defecto
+    } else {
         const sum = relevantResults.reduce((sum, r) => sum + parseFloat(r.Valor || 0), 0);
         currentValue = sum / relevantResults.length;
     }
@@ -261,34 +268,38 @@ function renderDashboard() {
 
 function renderTacticalView() {
     viewTitle.textContent = 'Vista Táctica por Objetivo';
-    const { objectives, keyResults } = appData;
+    const { objectives = [], keyResults = [] } = appData || {}; // CORRECCIÓN DEFENSIVA
     const { filteredKpis, filteredResults } = getFilteredData();
     let content = '<div class="space-y-8">';
 
-    objectives.forEach(obj => {
-        content += `<div class="bg-white p-6 rounded-lg shadow-sm">
-            <h3 class="text-lg font-bold text-gray-800 mb-4">${obj.Nombre_Objetivo}</h3>
-            <div class="space-y-4">`;
-        
-        const relatedKeyResults = keyResults.filter(kr => kr.ID_Objetivo_Asociado === obj.ID_Objetivo);
-        relatedKeyResults.forEach(kr => {
-            content += `<div class="pl-4 border-l-2 border-sky-200">
-                <h4 class="font-semibold text-gray-700">${kr.Nombre_Resultado_Clave}</h4>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-2">`;
+    if (objectives.length === 0) {
+         content += '<p class="text-gray-500">No se encontraron objetivos definidos.</p>';
+    } else {
+        objectives.forEach(obj => {
+            content += `<div class="bg-white p-6 rounded-lg shadow-sm">
+                <h3 class="text-lg font-bold text-gray-800 mb-4">${obj.Nombre_Objetivo}</h3>
+                <div class="space-y-4">`;
             
-            const relatedKpis = filteredKpis.filter(k => k.ID_Resultado_Clave === kr.ID_Resultado_Clave);
-            if(relatedKpis.length > 0) {
-                relatedKpis.forEach(kpi => {
-                    const metrics = calculateKpiMetrics(kpi, filteredResults);
-                    content += createKpiCardHTML(kpi, metrics, true); // small variant
-                });
-            } else {
-                content += '<p class="col-span-full text-sm text-gray-400">Sin KPIs para esta frecuencia.</p>';
-            }
-            content += `</div></div>`;
+            const relatedKeyResults = keyResults.filter(kr => kr.ID_Objetivo_Asociado === obj.ID_Objetivo);
+            relatedKeyResults.forEach(kr => {
+                content += `<div class="pl-4 border-l-2 border-sky-200">
+                    <h4 class="font-semibold text-gray-700">${kr.Nombre_Resultado_Clave}</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-2">`;
+                
+                const relatedKpis = filteredKpis.filter(k => k.ID_Resultado_Clave === kr.ID_Resultado_Clave);
+                if(relatedKpis.length > 0) {
+                    relatedKpis.forEach(kpi => {
+                        const metrics = calculateKpiMetrics(kpi, filteredResults);
+                        content += createKpiCardHTML(kpi, metrics, true); // small variant
+                    });
+                } else {
+                    content += '<p class="col-span-full text-sm text-gray-400">Sin KPIs para esta frecuencia.</p>';
+                }
+                content += `</div></div>`;
+            });
+            content += '</div></div>';
         });
-        content += '</div></div>';
-    });
+    }
 
     content += '</div>';
     mainContent.innerHTML = content;
@@ -320,14 +331,16 @@ function renderAdminView() {
         return;
     }
     
-    const { users } = appData;
-    let options = users.map(u => `<option value="${u.ID_Usuario}">${u.Nombre_Completo}</option>`).join('');
+    const { users = [] } = appData || {}; // CORRECCIÓN DEFENSIVA
+    let options = users
+        .filter(u => u.ID_Usuario && u.Nombre_Completo) // Filtrar usuarios inválidos
+        .map(u => `<option value="${u.ID_Usuario}">${u.Nombre_Completo}</option>`).join('');
     
     mainContent.innerHTML = `
         <div class="bg-white p-6 rounded-lg shadow-sm">
             <label for="user-selector" class="block text-sm font-medium text-gray-700 mb-2">Seleccionar Usuario:</label>
             <select id="user-selector" class="admin-select block w-full max-w-sm bg-white border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-sky-500 focus:border-sky-500">
-                <option value="">-- Todos los usuarios --</option>
+                <option value="">-- Seleccionar un usuario --</option>
                 ${options}
             </select>
         </div>
@@ -337,7 +350,8 @@ function renderAdminView() {
     `;
 
     document.getElementById('user-selector').addEventListener('change', (e) => {
-        renderAdminKpiList(parseInt(e.target.value, 10));
+        const selectedId = e.target.value ? parseInt(e.target.value, 10) : null;
+        renderAdminKpiList(selectedId);
     });
 }
 
@@ -348,10 +362,12 @@ function renderAdminKpiList(selectedUserId) {
         return;
     }
     
+    const { users = [] } = appData || {};
     const { filteredKpis, filteredResults } = getFilteredData();
     const userKpis = filteredKpis.filter(kpi => kpi.ID_Usuario_Res === selectedUserId);
+    const selectedUser = users.find(u => u.ID_Usuario === selectedUserId);
     
-    let content = `<h3 class="text-lg font-semibold mb-4">KPIs de ${appData.users.find(u => u.ID_Usuario === selectedUserId).Nombre_Completo}</h3>`;
+    let content = `<h3 class="text-lg font-semibold mb-4">KPIs de ${selectedUser?.Nombre_Completo || 'Usuario Desconocido'}</h3>`;
     content += '<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">';
     
     if (userKpis.length > 0) {
@@ -377,11 +393,12 @@ function createKpiCardHTML(kpi, metrics, isSmall = false) {
 
     const formattedValue = formatValue(currentValue, kpi.Unidad);
     const formattedMeta = formatValue(kpi.Meta, kpi.Unidad);
+    const responsibleUser = (appData.users || []).find(u => u.ID_Usuario === kpi.ID_Usuario_Res)?.Nombre_Completo || 'N/A';
     
     if (isSmall) {
         return `
             <div class="kpi-card bg-gray-50 p-3 rounded-md border border-gray-200">
-                <p class="text-sm font-medium text-gray-700 truncate">${kpi.Nombre_KPI}</p>
+                <p class="text-sm font-medium text-gray-700 truncate" title="${kpi.Nombre_KPI}">${kpi.Nombre_KPI}</p>
                 <div class="flex items-baseline justify-between mt-1">
                     <span class="text-lg font-bold text-sky-600">${formattedValue}</span>
                     <span class="text-xs text-gray-500">/ ${formattedMeta}</span>
@@ -393,8 +410,8 @@ function createKpiCardHTML(kpi, metrics, isSmall = false) {
     return `
         <div class="kpi-card bg-white p-5 rounded-lg shadow-sm border border-gray-200 flex flex-col justify-between">
             <div>
-                <p class="text-sm text-gray-500">${appData.users.find(u => u.ID_Usuario === kpi.ID_Usuario_Res)?.Nombre_Completo || 'N/A'}</p>
-                <p class="font-semibold text-gray-800 mt-1">${kpi.Nombre_KPI}</p>
+                <p class="text-sm text-gray-500">${responsibleUser}</p>
+                <p class="font-semibold text-gray-800 mt-1" title="${kpi.Nombre_KPI}">${kpi.Nombre_KPI}</p>
             </div>
             <div class="mt-4">
                 <div class="flex items-baseline justify-between">
@@ -443,7 +460,6 @@ function formatValue(value, unit) {
         return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(value || 0);
     }
     if (unit === '%') {
-        // Asumiendo que el valor ya está en decimal (e.g., 0.9 para 90%)
         return `${((value || 0) * 100).toFixed(0)}%`;
     }
     return (value || 0).toLocaleString('es-MX', { maximumFractionDigits: 1 });
