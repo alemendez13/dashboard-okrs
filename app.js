@@ -44,13 +44,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 
+// =================================================================================
+// === 2. INICIALIZACIÓN Y FLUJO PRINCIPAL ===
+// =================================================================================
+
+// La función initializeApp ahora es global y puede ser llamada desde cualquier lugar.
 async function initializeApp() {
-    showLoader();
-    await fetchData();
     setupEventListeners();
     updateUserContext();
     
-    // Vista inicial
     currentRenderFunction = renderDashboard;
     currentRenderFunction();
 
@@ -58,6 +60,26 @@ async function initializeApp() {
     setActiveFrequency(currentFrequency);
     showAppView();
 }
+
+document.addEventListener('DOMContentLoaded', async () => {
+    showLoader();
+    // 1. Siempre se cargan los datos primero.
+    await fetchData();
+
+    // 2. Se asocia el evento al formulario.
+    loginForm.addEventListener('submit', handleLogin);
+
+    // 3. Se comprueba si ya existe una sesión guardada.
+    const storedUserId = localStorage.getItem('currentUserId');
+    if (storedUserId) {
+        currentUserId = parseInt(storedUserId, 10);
+        // Se llama a la función global para iniciar la app.
+        await initializeApp();
+    } else {
+        // Si no hay sesión, simplemente se muestra la vista de login.
+        showLoginView();
+    }
+});
 
 // =================================================================================
 // === 3. MANEJO DE DATOS (API Y PROCESAMIENTO) ===
