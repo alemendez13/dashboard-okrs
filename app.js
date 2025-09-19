@@ -2,7 +2,7 @@
 // === 1. CONFIGURACIÓN Y ESTADO GLOBAL ===
 // =================================================================================
 
-const API_URL = 'https://script.google.com/macros/s/AKfycbwe-u3L7Vv6Q3yO8i2_eYc-U29oN2L8F77hPIMY3k-0_V1rO2U7Bf3U2P2/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbwffLrKK8xbxppJEaJbkjSZKqf_SZTqCtD6xsXpI55k9n1JLNVuuJhvwXk0hFkLt1b0/exec';
 
 // --- Elementos del DOM ---
 const mainContent = document.getElementById('main-content');
