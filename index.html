@@ -207,124 +207,214 @@
     // === LÓGICA DE RENDERIZADO (TUS FUNCIONES AVANZADAS CON LA CORRECCIÓN DE CÁLCULO) ===
     // =================================================================================
     
-    function renderDashboard() {
-        const content = document.getElementById('main-content');
-        document.getElementById('view-title').textContent = 'Dashboard General';
-        if (!appData.objectives || !appData.objectives.length) {
-            content.innerHTML = `<div class="text-center p-10 bg-white rounded-lg border"><p class="text-gray-500">No se encontraron objetivos para mostrar.</p></div>`;
-            return;
-        }
+// =================================================================
+// ========= PEGA ESTE CÓDIGO COMPLETO EN EL LUGAR DEL ANTERIOR ====
+// =================================================================
 
-        let html = '<div class="space-y-4">'; 
-        appData.objectives.forEach(obj => {
-            const keyResults = appData.keyResults.filter(kr => kr.ID_Objetivo_Asociado === obj.ID_Objetivo);
-            let totalProgress = 0;
-            let krCount = 0;
+function renderDashboard() {
+    mainContent.innerHTML = ''; // Limpiar contenido anterior
 
-            keyResults.forEach(kr => {
-                const kpis = appData.kpis.filter(kpi => kpi.ID_Resultado_Clave === kr.ID_Resultado_Clave);
-                if (kpis.length > 0) {
-                    const krProgress = kpis.reduce((acc, kpi) => {
-                        const resultsForKpi = appData.results.filter(r => r.ID_KPI === kpi.ID_KPI);
-                        const currentMonth = new Date().getMonth();
-                        const monthlyValues = resultsForKpi
-                            .filter(r => r.Fecha && r.Fecha.getMonth() === currentMonth)
-                            .map(r => r.Valor);
-                        
-                        let currentValue = 0;
-                        if (monthlyValues.length > 0) {
-                            if (kpi.Metodo_Agregacion === 'SUMAR') {
-                                currentValue = monthlyValues.reduce((a, b) => a + b, 0);
-                            } else {
-                                currentValue = monthlyValues.reduce((a, b) => a + b, 0) / monthlyValues.length;
-                            }
-                        }
-                        const kpiProgress = kpi.Meta > 0 ? (currentValue / kpi.Meta) : 0;
-                        return acc + kpiProgress;
-                    }, 0) / kpis.length;
-                    totalProgress += isNaN(krProgress) ? 0 : krProgress;
-                    krCount++;
-                }
-            });
+    // --- LÓGICA MEJORADA PARA KPIs DE SUMA (EJEMPLO CON FACTURACIÓN) ---
+    const facturacionKpiId = 'Kpi-05';
+    // En la siguiente línea, se cambió "data" por "appData" para que coincida con tu código
+    const facturacionResults = appData.results.filter(r => r.ID_KPI === facturacionKpiId);
 
-            const avgProgress = krCount > 0 ? Math.min((totalProgress / krCount) * 100, 100) : 0;
-            
-            html += `
-                <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
-                    <button class="w-full text-left p-5 hover:bg-gray-50 accordion-toggle">
-                        <div class="flex justify-between items-center">
-                            <h3 class="text-lg font-semibold text-gray-800">${obj.Nombre_Objetivo}</h3>
-                            <div class="flex items-center gap-4">
-                                <div class="w-40">
-                                    <div class="flex justify-between items-center mb-1"><span class="text-xs font-medium text-sky-700">Progreso</span><span class="text-xs font-bold text-sky-700">${avgProgress.toFixed(1)}%</span></div>
-                                    <div class="w-full bg-gray-200 rounded-full h-2"><div class="bg-sky-500 h-2 rounded-full" style="width: ${avgProgress.toFixed(1)}%"></div></div>
-                                </div>
-                                <svg class="w-5 h-5 text-gray-500 transition-transform transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                            </div>
+    let resultadoSemanal = 0;
+    let acumuladoMes = 0;
+    let acumuladoAnio = 0;
+
+    if (facturacionResults.length > 0) {
+        // Ordenar los resultados del más reciente al más antiguo
+        // En la siguiente línea, se cambió "r.Fecha" por "new Date(r.Fecha)" para asegurar la comparación
+        const sortedResults = [...facturacionResults].sort((a, b) => new Date(b.Fecha) - new Date(a.Fecha));
+
+        // 1. Resultado Semanal (el valor más reciente)
+        resultadoSemanal = sortedResults[0].Valor;
+
+        const now = new Date();
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
+
+        // 2. Acumulado del Mes
+        acumuladoMes = sortedResults
+            .filter(r => new Date(r.Fecha).getMonth() === currentMonth && new Date(r.Fecha).getFullYear() === currentYear)
+            .reduce((sum, r) => sum + r.Valor, 0);
+
+        // 3. Acumulado del Año
+        acumuladoAnio = sortedResults
+            .filter(r => new Date(r.Fecha).getFullYear() === currentYear)
+            .reduce((sum, r) => sum + r.Valor, 0);
+    }
+    // --- FIN DE LA LÓGICA MEJORADA ---
+
+
+    // --- NUEVA ESTRUCTURA HTML PARA MOSTRAR LOS 3 VALORES ---
+    const content = `
+        <div class="p-6">
+            <h1 class="text-2xl font-bold text-gray-800">Dashboard Principal</h1>
+            <p class="text-gray-600">Resumen del desempeño organizacional.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 px-6">
+            <div class="bg-white rounded-lg shadow-md border border-gray-200">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="bg-sky-100 text-sky-600 rounded-full p-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-dollar-sign"><line x1="12" x2="12" y1="2" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
                         </div>
-                    </button>
-                    <div class="accordion-content hidden p-6 pt-0 border-t border-gray-200">
-                        <p class="mt-4 mb-2 text-sm font-semibold text-gray-600">Resultados Clave:</p>
-                        <div class="space-y-5">`;
+                        <span class="ml-4 text-lg font-semibold text-gray-700">Facturación</span>
+                    </div>
+                    <div class="mt-4 space-y-3">
+                        <div class="flex justify-between items-baseline">
+                            <span class="text-sm text-gray-500">Resultado Semanal</span>
+                            <span class="text-lg font-bold text-gray-800">${formatCurrency(resultadoSemanal)}</span>
+                        </div>
+                        <div class="flex justify-between items-baseline">
+                            <span class="text-sm text-gray-500">Acumulado del Mes</span>
+                            <span class="text-lg font-bold text-gray-800">${formatCurrency(acumuladoMes)}</span>
+                        </div>
+                        <div class="flex justify-between items-baseline">
+                            <span class="text-sm font-bold text-gray-600">Acumulado Anual</span>
+                            <span class="text-xl font-bold text-sky-700">${formatCurrency(acumuladoAnio)}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            </div>
 
-            keyResults.forEach(kr => {
-                const kpis = appData.kpis.filter(kpi => kpi.ID_Resultado_Clave === kr.ID_Resultado_Clave); 
-                let current = 0, target = 0;
-                let isFinancial = false, unit = '';
-                
-                if(kpis.length > 0) {
-                    const firstKpi = kpis[0];
-                    unit = firstKpi.Unidad;
-                    isFinancial = firstKpi.Es_Financiero;
+        <div id="objectives-container" class="p-6">
+            </div>
+    `;
 
-                    if (firstKpi.Metodo_Agregacion === 'SUMAR') {
-                        kpis.forEach(kpi => {
-                            const results = appData.results.filter(r => r.ID_KPI === kpi.ID_KPI);
-                            current += results.reduce((sum, r) => sum + r.Valor, 0);
-                            target += kpi.Meta;
-                        });
-                    } else { // Promediar
-                        let totalCurrentSum = 0, kpiWithResultsCount = 0, totalTargetSum = 0;
-                        kpis.forEach(kpi => {
-                           const results = appData.results.filter(r => r.ID_KPI === kpi.ID_KPI);
-                           if(results.length > 0){
-                               const latestResult = results.sort((a,b) => b.Fecha - a.Fecha)[0].Valor;
-                               totalCurrentSum += latestResult;
-                               kpiWithResultsCount++;
-                           }
-                           totalTargetSum += kpi.Meta;
-                        });
-                        current = kpiWithResultsCount > 0 ? totalCurrentSum / kpiWithResultsCount : 0;
-                        target = kpis.length > 0 ? totalTargetSum / kpis.length : 0;
+    // Se inyecta la nueva tarjeta de facturación Y el contenedor para los objetivos
+    mainContent.innerHTML = content;
+    
+    // Se reutiliza una función para renderizar los objetivos dentro del nuevo contenedor
+    renderObjectivesIntoContainer(); 
+}
+
+// SE AÑADE UNA FUNCIÓN AUXILIAR PARA RENDERIZAR LOS OBJETIVOS
+// (Esta es la lógica que ya tenías, pero encapsulada en una nueva función)
+function renderObjectivesIntoContainer() {
+    const container = document.getElementById('objectives-container');
+    if (!appData.objectives || !appData.objectives.length) {
+        container.innerHTML = `<div class="text-center p-10 bg-white rounded-lg border"><p class="text-gray-500">No se encontraron objetivos para mostrar.</p></div>`;
+        return;
+    }
+
+    let html = '<div class="space-y-4">'; 
+    appData.objectives.forEach(obj => {
+        // (Aquí va exactamente el mismo código que ya tenías para generar el HTML de los objetivos)
+        // ... desde "const keyResults = appData.keyResults.filter..."
+        // ... hasta "html += `</div></div></div>`;"
+        const keyResults = appData.keyResults.filter(kr => kr.ID_Objetivo_Asociado === obj.ID_Objetivo);
+        let totalProgress = 0;
+        let krCount = 0;
+
+        keyResults.forEach(kr => {
+            const kpis = appData.kpis.filter(kpi => kpi.ID_Resultado_Clave === kr.ID_Resultado_Clave);
+            if (kpis.length > 0) {
+                const krProgress = kpis.reduce((acc, kpi) => {
+                    const resultsForKpi = appData.results.filter(r => r.ID_KPI === kpi.ID_KPI);
+                    const currentMonth = new Date().getMonth();
+                    const monthlyValues = resultsForKpi
+                        .filter(r => r.Fecha && new Date(r.Fecha).getMonth() === currentMonth)
+                        .map(r => r.Valor);
+                    
+                    let currentValue = 0;
+                    if (monthlyValues.length > 0) {
+                        if (kpi.Metodo_Agregacion === 'SUMAR') {
+                            currentValue = monthlyValues.reduce((a, b) => a + b, 0);
+                        } else {
+                            currentValue = monthlyValues.reduce((a, b) => a + b, 0) / monthlyValues.length;
+                        }
                     }
-                }
-
-                const progress = target > 0 ? Math.min((current / target) * 100, 100) : 0;
-                let metaDetails;
-                
-                if (isFinancial && !isAdmin) {
-                    metaDetails = `Progreso: <span class="font-semibold">${progress.toFixed(1)}%</span>`;
-                } else if (unit === '%') {
-                    metaDetails = `Meta: ${(target*100).toFixed(1)}% | Actual: ${(current*100).toFixed(1)}%`;
-                } else {
-                    const formatOptions = unit === '$' ? { style: 'currency', currency: 'MXN', minimumFractionDigits: 0 } : {};
-                    metaDetails = `Meta: ${target.toLocaleString('es-MX', formatOptions)} | Actual: ${current.toLocaleString('es-MX', formatOptions)}`;
-                }
-
-                html += `
-                    <div>
-                        <div class="flex justify-between items-center mb-1"><p class="font-medium text-gray-700">${kr.Nombre_Resultado_Clave}</p><p class="text-sm text-gray-500">${metaDetails}</p></div>
-                        <div class="w-full bg-gray-200 rounded-full h-2"><div class="bg-teal-500 h-2 rounded-full" style="width: ${progress.toFixed(1)}%"></div></div>
-                    </div>`;
-            });
-            
-            html += `</div></div></div>`;
+                    const kpiProgress = kpi.Meta > 0 ? (currentValue / kpi.Meta) : 0;
+                    return acc + kpiProgress;
+                }, 0) / kpis.length;
+                totalProgress += isNaN(krProgress) ? 0 : krProgress;
+                krCount++;
+            }
         });
 
-        html += '</div>';
-        content.innerHTML = html;
-        addAccordionListeners();
-    }
+        const avgProgress = krCount > 0 ? Math.min((totalProgress / krCount) * 100, 100) : 0;
+        
+        html += `
+            <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                <button class="w-full text-left p-5 hover:bg-gray-50 accordion-toggle">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-lg font-semibold text-gray-800">${obj.Nombre_Objetivo}</h3>
+                        <div class="flex items-center gap-4">
+                            <div class="w-40">
+                                <div class="flex justify-between items-center mb-1"><span class="text-xs font-medium text-sky-700">Progreso</span><span class="text-xs font-bold text-sky-700">${avgProgress.toFixed(1)}%</span></div>
+                                <div class="w-full bg-gray-200 rounded-full h-2"><div class="bg-sky-500 h-2 rounded-full" style="width: ${avgProgress.toFixed(1)}%"></div></div>
+                            </div>
+                            <svg class="w-5 h-5 text-gray-500 transition-transform transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </div>
+                    </div>
+                </button>
+                <div class="accordion-content hidden p-6 pt-0 border-t border-gray-200">
+                    <p class="mt-4 mb-2 text-sm font-semibold text-gray-600">Resultados Clave:</p>
+                    <div class="space-y-5">`;
+
+        keyResults.forEach(kr => {
+            const kpis = appData.kpis.filter(kpi => kpi.ID_Resultado_Clave === kr.ID_Resultado_Clave); 
+            let current = 0, target = 0;
+            let isFinancial = false, unit = '';
+            
+            if(kpis.length > 0) {
+                const firstKpi = kpis[0];
+                unit = firstKpi.Unidad;
+                isFinancial = firstKpi.Es_Financiero;
+
+                if (firstKpi.Metodo_Agregacion === 'SUMAR') {
+                    kpis.forEach(kpi => {
+                        const results = appData.results.filter(r => r.ID_KPI === kpi.ID_KPI);
+                        current += results.reduce((sum, r) => sum + r.Valor, 0);
+                        target += kpi.Meta;
+                    });
+                } else { // Promediar
+                    let totalCurrentSum = 0, kpiWithResultsCount = 0, totalTargetSum = 0;
+                    kpis.forEach(kpi => {
+                       const results = appData.results.filter(r => r.ID_KPI === kpi.ID_KPI);
+                       if(results.length > 0){
+                           const latestResult = results.sort((a,b) => new Date(b.Fecha) - new Date(a.Fecha))[0].Valor;
+                           totalCurrentSum += latestResult;
+                           kpiWithResultsCount++;
+                       }
+                       totalTargetSum += kpi.Meta;
+                    });
+                    current = kpiWithResultsCount > 0 ? totalCurrentSum / kpiWithResultsCount : 0;
+                    target = kpis.length > 0 ? totalTargetSum / kpis.length : 0;
+                }
+            }
+
+            const progress = target > 0 ? Math.min((current / target) * 100, 100) : 0;
+            let metaDetails;
+            
+            if (isFinancial && !isAdmin) {
+                metaDetails = `Progreso: <span class="font-semibold">${progress.toFixed(1)}%</span>`;
+            } else if (unit === '%') {
+                metaDetails = `Meta: ${(target*100).toFixed(1)}% | Actual: ${(current*100).toFixed(1)}%`;
+            } else {
+                const formatOptions = unit === '$' ? { style: 'currency', currency: 'MXN', minimumFractionDigits: 0 } : {};
+                metaDetails = `Meta: ${target.toLocaleString('es-MX', formatOptions)} | Actual: ${current.toLocaleString('es-MX', formatOptions)}`;
+            }
+
+            html += `
+                <div>
+                    <div class="flex justify-between items-center mb-1"><p class="font-medium text-gray-700">${kr.Nombre_Resultado_Clave}</p><p class="text-sm text-gray-500">${metaDetails}</p></div>
+                    <div class="w-full bg-gray-200 rounded-full h-2"><div class="bg-teal-500 h-2 rounded-full" style="width: ${progress.toFixed(1)}%"></div></div>
+                </div>`;
+        });
+        
+        html += `</div></div></div>`;
+    });
+
+    html += '</div>';
+    container.innerHTML = html;
+    addAccordionListeners();
+}
     
     function renderTacticalView() {
         const content = document.getElementById('main-content');
