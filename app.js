@@ -23,32 +23,6 @@ let currentRenderFunction = () => {}; // Función de la vista actual para re-ren
 // === 2. INICIALIZACIÓN Y FLUJO PRINCIPAL ===
 // =================================================================================
 
-document.addEventListener('DOMContentLoaded', async () => {
-    showLoader();
-    // 1. SIEMPRE se cargan los datos primero para que estén disponibles.
-    await fetchData();
-
-    // 2. Se asocia el evento al formulario de login.
-    loginForm.addEventListener('submit', handleLogin);
-
-    // 3. Se comprueba si ya existe una sesión.
-    const storedUserId = localStorage.getItem('currentUserId');
-    if (storedUserId) {
-        currentUserId = parseInt(storedUserId, 10);
-        // El resto de la app se inicializa de forma segura.
-        initializeApp().catch(console.error);
-    } else {
-        // Si no hay sesión, simplemente se muestra la vista de login.
-        showLoginView();
-    }
-});
-
-
-// =================================================================================
-// === 2. INICIALIZACIÓN Y FLUJO PRINCIPAL ===
-// =================================================================================
-
-// La función initializeApp ahora es global y puede ser llamada desde cualquier lugar.
 async function initializeApp() {
     setupEventListeners();
     updateUserContext();
@@ -63,20 +37,14 @@ async function initializeApp() {
 
 document.addEventListener('DOMContentLoaded', async () => {
     showLoader();
-    // 1. Siempre se cargan los datos primero.
     await fetchData();
-
-    // 2. Se asocia el evento al formulario.
     loginForm.addEventListener('submit', handleLogin);
 
-    // 3. Se comprueba si ya existe una sesión guardada.
     const storedUserId = localStorage.getItem('currentUserId');
     if (storedUserId) {
         currentUserId = parseInt(storedUserId, 10);
-        // Se llama a la función global para iniciar la app.
         await initializeApp();
     } else {
-        // Si no hay sesión, simplemente se muestra la vista de login.
         showLoginView();
     }
 });
@@ -91,15 +59,22 @@ async function fetchData() {
         if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
         const rawData = await response.json();
         
-        // Limpieza y pre-procesamiento de datos
+        // CORRECCIÓN DEFINITIVA: Estandarizar todos los IDs a NÚMEROS al cargar
         appData = {
-            users: rawData.users.filter(u => u.ID_Usuario) || [],
+            users: (rawData.users || [])
+                .filter(u => u.ID_Usuario) // Filtra filas vacías en el CSV
+                .map(u => ({
+                    ...u,
+                    ID_Usuario: parseInt(u.ID_Usuario, 10)
+                })),
             objectives: rawData.objectives || [],
             keyResults: rawData.keyResults || [],
             processes: rawData.processes || [],
             kpis: (rawData.kpis || []).map(k => ({
                 ...k,
                 Meta: parseFloat(k.Meta) || 0,
+                // Convierte el ID responsable a número para comparaciones consistentes
+                ID_Usuario_Res: parseInt(k.ID_Usuario_Res, 10),
                 Es_Financiero: String(k.Es_Financiero).toUpperCase() === 'VERDADERO',
             })),
             results: (rawData.results || []).map(r => ({
@@ -135,7 +110,6 @@ function processProgress(frequency) {
             currentValue = (relevantResults[0] || { Valor: 0 }).Valor;
         }
         
-        // Si la frecuencia es semanal y no hay datos, el valor es 0, como solicitaste.
         if (frequency === 'semanal' && relevantResults.length === 0) {
             currentValue = 0;
         }
@@ -170,7 +144,6 @@ function renderDashboard() {
     processProgress(currentFrequency);
 
     const objectivesHtml = appData.objectives.map(obj => {
-        const keyResults = appData.keyResults.filter(kr => kr.ID_Objetivo_Asociado === obj.ID_Objetivo);
         const progress = obj.progress || 0;
         return `
             <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
@@ -309,16 +282,18 @@ function renderAdminView() {
 // === 5. MANEJADORES DE EVENTOS Y UTILIDADES ===
 // =================================================================================
 
-function handleLogin(e) {
+async function handleLogin(e) {
     e.preventDefault();
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
+    
+    // La comparación ahora es segura porque los IDs en appData son números.
     const user = appData.users.find(u => u.Email === email && u.Contraseña === password);
 
     if (user) {
-        currentUserId = user.ID_Usuario;
+        currentUserId = user.ID_Usuario; 
         localStorage.setItem('currentUserId', currentUserId);
-        initializeApp().catch(console.error);
+        await initializeApp();
     } else {
         document.getElementById('error-message').textContent = 'Credenciales incorrectas.';
     }
@@ -356,7 +331,6 @@ function setupEventListeners() {
             if (newFrequency !== currentFrequency) {
                 currentFrequency = newFrequency;
                 setActiveFrequency(newFrequency);
-                // Re-renderiza la vista actual con la nueva frecuencia
                 currentRenderFunction();
             }
         }
@@ -364,6 +338,7 @@ function setupEventListeners() {
 }
 
 function updateUserContext() {
+    // La comparación ahora es segura: número vs número.
     const currentUser = appData.users.find(u => u.ID_Usuario === currentUserId);
     if (!currentUser) { handleLogout(); return; }
 
@@ -378,7 +353,6 @@ function updateUserContext() {
     `;
     document.getElementById('logout-link').addEventListener('click', handleLogout);
 
-    // Muestra/oculta el botón de Admin
     document.getElementById('nav-admin').style.display = isAdmin ? 'flex' : 'none';
 }
 
@@ -439,3 +413,4 @@ function showLoader() { loader.style.display = 'flex'; }
 function hideLoader() { loader.style.display = 'none'; }
 function showLoginView() { hideLoader(); loginView.style.display = 'flex'; appView.style.display = 'none'; }
 function showAppView() { hideLoader(); loginView.style.display = 'none'; appView.style.display = 'block'; }
+
