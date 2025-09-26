@@ -1,0 +1,21 @@
+# Dependencias
+/node_modules
+
+# Archivos de build
+/dist
+
+# Archivos de caché y logs
+.vite
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Archivos del sistema operativo
+.DS_Store
+Thumbs.db
+
+# Archivos de entorno (¡EL MÁS IMPORTANTE!)
+# Contiene secretos como la URL de la API
+.env
+.env.local
+.env.*.local

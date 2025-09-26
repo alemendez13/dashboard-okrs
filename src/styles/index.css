@@ -1,0 +1,19 @@
+/*
+ * Este archivo importa las "directivas" base de Tailwind CSS.
+ * El motor de Vite las procesará para generar todo el CSS necesario
+ * para que las clases de utilidad (como 'text-xl', 'p-8', etc.) funcionen.
+*/
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Aquí también puedes añadir estilos globales personalizados si lo necesitas.
+ * Por ejemplo, para aplicar un estilo base a todo el cuerpo de la página.
+*/
+body {
+  background-color: #f8fafc; /* Equivalente a la clase `bg-gray-50` de Tailwind */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
